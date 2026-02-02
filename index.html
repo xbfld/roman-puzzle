@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roman Puzzle</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f0e8;
+      background-image:
+        radial-gradient(circle, #e0d8cc 1px, transparent 1px);
+      background-size: 20px 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #333;
+    }
+
+    #game-container {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      width: 100%;
+      border: 1px solid #e0e0e0;
+    }
+
+    .game-header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .game-header h1 {
+      font-size: 2.5rem;
+      color: #8b4513;
+      margin-bottom: 20px;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+
+    .status-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      min-height: 80px;
+      align-items: flex-start;
+    }
+
+    .status-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f8f4ef;
+      padding: 12px 20px;
+      border-radius: 12px;
+      min-width: 80px;
+      border: 1px solid #e8e0d5;
+    }
+
+    .status-item.quest-status {
+      flex-grow: 1;
+      max-width: 300px;
+      min-height: 70px;
+    }
+
+    .status-label {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .status-value {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .quest-status .status-value {
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .char-done {
+      color: #4caf50;
+      background: #e8f5e9;
+      padding: 2px 8px;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .char-done::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      height: 2px;
+      background: #4caf50;
+    }
+
+    .char-current {
+      color: #fff;
+      background: #ff9800;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      animation: pulse 1s infinite;
+    }
+
+    .char-pending {
+      color: #999;
+      background: #f0f0f0;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .return-hint {
+      display: block;
+      width: 100%;
+      color: #4caf50;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .game-over {
+      width: 100%;
+      text-align: center;
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      font-weight: bold;
+      border: 1px solid #ffcdd2;
+    }
+
+    .grid-wrapper {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .grid-container {
+      display: grid;
+      gap: 4px;
+      background: #f0ebe3;
+      padding: 12px;
+      border-radius: 12px;
+      border: 2px solid #d4c8b8;
+    }
+
+    .cell {
+      aspect-ratio: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      cursor: default;
+      transition: all 0.15s ease;
+      position: relative;
+      min-width: 0;
+    }
+
+    /* 체커보드 패턴 */
+    .cell-shelter {
+      background: #fafafa;
+      border: 2px solid #e8e8e8;
+    }
+
+    .cell-shelter.cell-dark {
+      background: #f0f0f0;
+      border-color: #e0e0e0;
+    }
+
+    /* 좌표 표시 (선택적) */
+    .cell-coord {
+      position: absolute;
+      bottom: 2px;
+      right: 4px;
+      font-size: 0.5rem;
+      color: #ccc;
+      font-weight: normal;
+    }
+
+    .cell-roman {
+      background: linear-gradient(145deg, #fff8e1 0%, #ffecb3 100%);
+      color: #8b4513;
+      border: 2px solid #ffd54f;
+    }
+
+    .tile-text {
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+
+    .cell-player {
+      box-shadow: 0 0 0 3px #4caf50, 0 4px 12px rgba(76, 175, 80, 0.4);
+      border-color: #4caf50 !important;
+      z-index: 10;
+    }
+
+    .cell-valid-move {
+      background: linear-gradient(145deg, #e8f5e9 0%, #c8e6c9 100%) !important;
+      border: 2px dashed #81c784 !important;
+      cursor: pointer;
+      animation: glow 1.5s ease-in-out infinite;
+    }
+
+    .cell-valid-move:hover {
+      background: linear-gradient(145deg, #c8e6c9 0%, #a5d6a7 100%) !important;
+      transform: scale(1.05);
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 5px rgba(76, 175, 80, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.5); }
+    }
+
+    .player-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .level-badge {
+      font-size: 0.6rem;
+      color: #fff;
+      background: #4caf50;
+      padding: 1px 4px;
+      border-radius: 4px;
+      font-weight: bold;
+      margin-bottom: 2px;
+      line-height: 1.2;
+    }
+
+    .player-marker {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(145deg, #66bb6a 0%, #43a047 100%);
+      border-radius: 50%;
+      border: 2px solid #2e7d32;
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.5);
+      animation: playerPulse 1s ease-in-out infinite;
+      position: relative;
+    }
+
+    .player-marker::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      width: 4px;
+      height: 4px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    .player-marker::after {
+      content: '';
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      width: 4px;
+      height: 4px;
+      background: #fff;
+      border-radius: 50%;
+    }
+
+    @keyframes playerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+    }
+
+    .level-up-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .level-up-text {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #4caf50;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2), 0 0 20px rgba(76, 175, 80, 0.5);
+      animation: levelUpFloat 1.5s ease-out forwards;
+      white-space: nowrap;
+    }
+
+    @keyframes levelUpFloat {
+      0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.8);
+      }
+      20% {
+        opacity: 1;
+        transform: translateY(0) scale(1.2);
+      }
+      80% {
+        opacity: 1;
+        transform: translateY(-30px) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.8);
+      }
+    }
+
+    .auto-tile-text {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ff9800;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+      animation: autoTileFloat 0.8s ease-out forwards;
+      white-space: nowrap;
+    }
+
+    @keyframes autoTileFloat {
+      0% {
+        opacity: 0;
+        transform: translateY(10px) scale(0.8);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(0) scale(1.1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+      }
+    }
+
+    .game-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .controls-info {
+      font-size: 0.85rem;
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .controls-info strong {
+      color: #555;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .undo-button, .reset-button {
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: bold;
+    }
+
+    .undo-button {
+      background: linear-gradient(145deg, #78909c 0%, #546e7a 100%);
+      box-shadow: 0 2px 8px rgba(84, 110, 122, 0.3);
+    }
+
+    .undo-button:hover {
+      background: linear-gradient(145deg, #90a4ae 0%, #78909c 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(84, 110, 122, 0.4);
+    }
+
+    .reset-button {
+      background: linear-gradient(145deg, #ff7043 0%, #e64a19 100%);
+      box-shadow: 0 2px 8px rgba(230, 74, 25, 0.3);
+    }
+
+    .reset-button:hover {
+      background: linear-gradient(145deg, #ff8a65 0%, #ff7043 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(230, 74, 25, 0.4);
+    }
+
+    .undo-button:active, .reset-button:active {
+      transform: translateY(0);
+    }
+
+    /* 반응형 */
+    @media (max-width: 500px) {
+      #game-container {
+        padding: 15px;
+      }
+
+      .game-header h1 {
+        font-size: 1.8rem;
+      }
+
+      .status-container {
+        gap: 10px;
+      }
+
+      .status-item {
+        padding: 8px 12px;
+        min-width: 60px;
+      }
+
+      .cell {
+        font-size: 0.9rem;
+      }
+
+      .tile-text {
+        font-size: 0.9rem;
+      }
+
+      .player-marker {
+        width: 18px;
+        height: 18px;
+      }
+
+      .player-marker::before,
+      .player-marker::after {
+        width: 3px;
+        height: 3px;
+        top: 3px;
+      }
+
+      .player-marker::before {
+        left: 4px;
+      }
+
+      .player-marker::after {
+        right: 4px;
+      }
+
+      .level-badge {
+        font-size: 0.5rem;
+        padding: 1px 3px;
+      }
+
+      .controls-info {
+        font-size: 0.75rem;
+      }
+
+      .level-up-text {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container"></div>
+  <script type="module" src="./dist/main.js"></script>
+</body>
+</html>
