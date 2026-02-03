@@ -1,5 +1,5 @@
-import { GameState, Position, Direction, RomanChar, PlacedTile, posToKey, GameTimeline } from './types.js';
-import { toRoman } from './roman.js';
+import { GameState, Position, Direction, RomanChar, PlacedTile, posToKey, GameTimeline } from './types';
+import { toRoman } from './roman';
 
 // 게임 상태 초기화
 export function createInitialState(viewportSize: number = 11): GameState {

@@ -1,17 +1,26 @@
 {
   "name": "roman-puzzle",
-  "version": "1.0.0",
-  "description": "A web-based TypeScript puzzle game with Roman numerals",
-  "main": "dist/main.js",
+  "version": "2.0.0",
+  "description": "A web-based puzzle game with Roman numerals",
+  "type": "module",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch",
-    "start": "open index.html",
-    "serve": "python3 -m http.server 8080"
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
   },
-  "keywords": ["puzzle", "game", "typescript", "roman-numerals"],
+  "keywords": ["puzzle", "game", "typescript", "roman-numerals", "react"],
   "license": "MIT",
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "styled-components": "^6.1.13",
+    "zustand": "^5.0.2"
+  },
   "devDependencies": {
-    "typescript": "^5.3.0"
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.3"
   }
 }
