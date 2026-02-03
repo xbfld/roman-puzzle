@@ -1,10 +1,11 @@
-import { createInitialState, move, resetGame } from './game.js';
+import { createInitialState, resetGame, move, createTimeline, addMoveToTimeline, undoTimeline, redoTimeline, strongUndoTimeline, strongRedoTimeline, seekTimeline, } from './game.js';
 import { GameRenderer } from './renderer.js';
 class RomanPuzzleGame {
     constructor(containerId, viewportSize = 11) {
-        this.history = []; // Undo 히스토리
-        this.redoStack = []; // Redo 스택
-        this.maxHistorySize = 100; // 최대 히스토리 크기
+        // 퍼포먼스 최적화: 체크포인트 캐싱
+        this.stateCache = new Map();
+        this.cacheInterval = 50; // 50수마다 캐싱
+        this.timeline = createTimeline(viewportSize);
         this.state = createInitialState(viewportSize);
         this.previousLevel = this.state.level;
         this.renderer = new GameRenderer(containerId, {
@@ -13,107 +14,188 @@ class RomanPuzzleGame {
             onReset: () => this.handleReset(),
             onUndo: () => this.handleUndo(),
             onRedo: () => this.handleRedo(),
+            onStrongUndo: () => this.handleStrongUndo(),
+            onStrongRedo: () => this.handleStrongRedo(),
+            onSeek: (index) => this.handleSeek(index),
             onSave: () => this.handleSave(),
             onLoad: () => this.handleLoad(),
         });
         this.render();
     }
     handleMove(direction) {
-        const result = move(this.state, direction);
-        if (result.state !== this.state) {
-            // 이동 전 상태를 히스토리에 저장
-            this.saveToHistory(this.state);
-            // 새로운 이동 시 redo 스택 초기화
-            this.redoStack = [];
-            this.state = result.state;
-            this.render(direction); // 이동 방향 전달
+        const { timeline: newTimeline, moveResult } = addMoveToTimeline(this.timeline, direction, this.state);
+        if (moveResult.state !== this.state) {
+            this.timeline = newTimeline;
+            this.state = moveResult.state;
+            // 체크포인트 캐싱
+            if (this.timeline.currentIndex % this.cacheInterval === 0) {
+                this.cacheState(this.timeline.currentIndex, this.state);
+            }
+            this.render(direction);
             // 타일 자동 배치 표시
-            if (result.autoPlacedTile) {
-                this.renderer.showAutoTilePlacement(result.autoPlacedTile);
+            if (moveResult.autoPlacedTile) {
+                this.renderer.showAutoTilePlacement(moveResult.autoPlacedTile);
             }
             // 레벨업 시 알림
-            if (result.leveledUp) {
+            if (moveResult.leveledUp) {
                 this.renderer.showLevelUp(this.state.level);
             }
             this.previousLevel = this.state.level;
         }
     }
-    saveToHistory(state) {
-        // 상태 깊은 복사
+    cacheState(index, state) {
+        // 깊은 복사
         const stateCopy = {
             ...state,
             tiles: new Map(state.tiles),
             playerPosition: { ...state.playerPosition },
         };
-        this.history.push(stateCopy);
-        // 히스토리 크기 제한
-        if (this.history.length > this.maxHistorySize) {
-            this.history.shift();
+        this.stateCache.set(index, stateCopy);
+    }
+    getStateAtIndexOptimized(index) {
+        // 가장 가까운 캐시된 체크포인트 찾기
+        let nearestCacheIndex = 0;
+        let nearestState = createInitialState(this.timeline.viewportSize);
+        for (const [cachedIndex, cachedState] of this.stateCache) {
+            if (cachedIndex <= index && cachedIndex > nearestCacheIndex) {
+                nearestCacheIndex = cachedIndex;
+                nearestState = cachedState;
+            }
         }
+        // 체크포인트부터 목표 인덱스까지 재생
+        let state = {
+            ...nearestState,
+            tiles: new Map(nearestState.tiles),
+            playerPosition: { ...nearestState.playerPosition },
+        };
+        for (let i = nearestCacheIndex; i < index; i++) {
+            const result = move(state, this.timeline.moves[i]);
+            state = result.state;
+        }
+        return state;
+    }
+    rebuildStateSync() {
+        this.state = this.getStateAtIndexOptimized(this.timeline.currentIndex);
+        this.previousLevel = this.state.level;
     }
     handleUndo() {
-        if (this.history.length === 0) {
-            return; // 되돌릴 상태 없음
+        const newTimeline = undoTimeline(this.timeline);
+        if (newTimeline.currentIndex !== this.timeline.currentIndex) {
+            this.timeline = newTimeline;
+            this.rebuildStateSync();
+            this.render();
         }
-        // 현재 상태를 redo 스택에 저장
-        this.saveToRedoStack(this.state);
-        const previousState = this.history.pop();
-        this.state = previousState;
-        this.previousLevel = this.state.level;
-        this.render();
-    }
-    saveToRedoStack(state) {
-        const stateCopy = {
-            ...state,
-            tiles: new Map(state.tiles),
-            playerPosition: { ...state.playerPosition },
-        };
-        this.redoStack.push(stateCopy);
     }
     handleRedo() {
-        if (this.redoStack.length === 0) {
-            return; // 다시 실행할 상태 없음
+        const newTimeline = redoTimeline(this.timeline);
+        if (newTimeline.currentIndex !== this.timeline.currentIndex) {
+            this.timeline = newTimeline;
+            this.rebuildStateSync();
+            this.render();
         }
-        // 현재 상태를 히스토리에 저장
-        this.saveToHistory(this.state);
-        const nextState = this.redoStack.pop();
-        this.state = nextState;
-        this.previousLevel = this.state.level;
-        this.render();
     }
-    serializeState(state) {
-        return {
-            ...state,
-            tiles: Array.from(state.tiles.entries()),
-        };
+    handleStrongUndo() {
+        const newTimeline = strongUndoTimeline(this.timeline);
+        if (newTimeline.currentIndex !== this.timeline.currentIndex) {
+            this.timeline = newTimeline;
+            this.rebuildStateSync();
+            this.render();
+            this.renderer.showMessage(`Lv.${this.state.level} 시작점`);
+        }
     }
-    deserializeState(data) {
-        // 기존 저장 데이터 호환 (RomanChar만 있던 경우 → PlacedTile로 변환)
-        const tiles = new Map(data.tiles.map(([key, value]) => {
-            if (typeof value === 'string') {
-                // 이전 버전: RomanChar만 저장됨 → 레벨 1로 간주
-                return [key, { char: value, level: 1 }];
+    handleStrongRedo() {
+        const newTimeline = strongRedoTimeline(this.timeline);
+        if (newTimeline.currentIndex !== this.timeline.currentIndex) {
+            this.timeline = newTimeline;
+            this.rebuildStateSync();
+            this.render();
+            if (this.timeline.currentIndex < this.timeline.moves.length) {
+                this.renderer.showMessage(`Lv.${this.state.level} 시작점`);
             }
-            // 새 버전: PlacedTile 객체
-            return [key, value];
-        }));
-        return {
-            ...data,
-            tiles,
-            playerPosition: { ...data.playerPosition },
+        }
+    }
+    handleSeek(index) {
+        const newTimeline = seekTimeline(this.timeline, index);
+        if (newTimeline.currentIndex !== this.timeline.currentIndex) {
+            this.timeline = newTimeline;
+            this.rebuildStateSync();
+            this.render();
+        }
+    }
+    // 압축 포맷으로 직렬화 (공유용)
+    serializeCompact() {
+        const dirMap = {
+            up: 'U',
+            down: 'D',
+            left: 'L',
+            right: 'R',
         };
+        const movesStr = this.timeline.moves.map(d => dirMap[d]).join('');
+        return JSON.stringify({
+            v: 2,
+            s: this.timeline.viewportSize,
+            m: movesStr,
+            i: this.timeline.currentIndex,
+        });
+    }
+    // 압축 포맷 역직렬화
+    deserializeCompact(json) {
+        try {
+            const data = JSON.parse(json);
+            if (data.v === 2) {
+                const dirMap = {
+                    U: 'up',
+                    D: 'down',
+                    L: 'left',
+                    R: 'right',
+                };
+                const moves = data.m.split('').map((c) => dirMap[c]);
+                // 레벨업 인덱스 재계산
+                const levelUpIndices = this.calculateLevelUpIndices(data.s, moves);
+                return {
+                    viewportSize: data.s,
+                    moves,
+                    currentIndex: data.i ?? moves.length,
+                    levelUpIndices,
+                };
+            }
+            // v1 호환 (기존 포맷)
+            if (data.version === 1) {
+                return this.migrateFromV1(data);
+            }
+            return null;
+        }
+        catch {
+            return null;
+        }
+    }
+    // 레벨업 인덱스 계산
+    calculateLevelUpIndices(viewportSize, moves) {
+        const indices = [0];
+        let state = createInitialState(viewportSize);
+        for (let i = 0; i < moves.length; i++) {
+            const result = move(state, moves[i]);
+            if (result.leveledUp) {
+                indices.push(i + 1);
+            }
+            state = result.state;
+        }
+        return indices;
+    }
+    // v1 포맷에서 마이그레이션 (기존 저장 호환)
+    migrateFromV1(data) {
+        // v1은 전체 상태를 저장했으므로 moves 복원 불가
+        // 현재 상태만 로드하고 히스토리는 버림
+        this.renderer.showMessage('이전 버전 - 히스토리 없이 로드');
+        return null;
     }
     async handleSave() {
-        const saveData = {
-            version: 1,
-            state: this.serializeState(this.state),
-            history: this.history.map(s => this.serializeState(s)),
-            redoStack: this.redoStack.map(s => this.serializeState(s)),
-        };
-        const json = JSON.stringify(saveData);
+        const json = this.serializeCompact();
         try {
             await navigator.clipboard.writeText(json);
-            this.renderer.showMessage('저장됨!');
+            const moveCount = this.timeline.moves.length;
+            const bytes = new Blob([json]).size;
+            this.renderer.showMessage(`저장됨! (${moveCount}수, ${bytes}B)`);
         }
         catch (e) {
             console.error('클립보드 복사 실패:', e);
@@ -123,43 +205,58 @@ class RomanPuzzleGame {
     async handleLoad() {
         try {
             const json = await navigator.clipboard.readText();
-            const saveData = JSON.parse(json);
-            if (saveData.version !== 1) {
-                throw new Error('지원하지 않는 버전');
+            const timeline = this.deserializeCompact(json);
+            if (!timeline) {
+                throw new Error('파싱 실패');
             }
-            this.state = this.deserializeState(saveData.state);
-            this.history = saveData.history.map((s) => this.deserializeState(s));
-            this.redoStack = saveData.redoStack.map((s) => this.deserializeState(s));
-            this.previousLevel = this.state.level;
+            this.timeline = timeline;
+            this.stateCache.clear();
+            this.rebuildStateSync();
+            // 체크포인트 재구축
+            this.rebuildCache();
             this.render();
-            this.renderer.showMessage('불러옴!');
+            this.renderer.showMessage(`불러옴! (${this.timeline.moves.length}수)`);
         }
         catch (e) {
             console.error('불러오기 실패:', e);
             this.renderer.showMessage('불러오기 실패');
         }
     }
+    rebuildCache() {
+        // 체크포인트 캐싱
+        let state = createInitialState(this.timeline.viewportSize);
+        for (let i = 0; i < this.timeline.moves.length; i++) {
+            const result = move(state, this.timeline.moves[i]);
+            state = result.state;
+            if ((i + 1) % this.cacheInterval === 0) {
+                this.cacheState(i + 1, state);
+            }
+        }
+    }
     handlePlaceTile(position, tile) {
         // 자동 배치로 변경되어 수동 배치는 사용하지 않음
     }
     handleReset() {
-        this.state = resetGame(this.state.viewportSize);
+        this.timeline = createTimeline(this.timeline.viewportSize);
+        this.state = resetGame(this.timeline.viewportSize);
+        this.stateCache.clear();
         this.previousLevel = this.state.level;
         this.render();
     }
     render(direction) {
-        this.renderer.render(this.state, direction);
+        this.renderer.render(this.state, this.timeline, direction);
     }
     // 외부에서 상태 접근용
     getState() {
         return this.state;
     }
+    getTimeline() {
+        return this.timeline;
+    }
     // 뷰포트 크기 업데이트
     updateViewportSize(newSize) {
-        this.state = {
-            ...this.state,
-            viewportSize: newSize,
-        };
+        this.timeline = { ...this.timeline, viewportSize: newSize };
+        this.state = { ...this.state, viewportSize: newSize };
         this.render();
     }
 }

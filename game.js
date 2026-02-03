@@ -217,4 +217,103 @@ export function getGameStatus(state) {
         isGameOver: isGameOver(state),
     };
 }
+// 타임라인 초기화
+export function createTimeline(viewportSize = 11) {
+    return {
+        viewportSize,
+        moves: [],
+        currentIndex: 0,
+        levelUpIndices: [0], // 레벨 1 시작점
+    };
+}
+// 이동 기록에서 특정 인덱스까지의 상태 복원
+export function getStateAtIndex(timeline, targetIndex) {
+    let state = createInitialState(timeline.viewportSize);
+    const maxIndex = Math.min(targetIndex, timeline.moves.length);
+    for (let i = 0; i < maxIndex; i++) {
+        const result = move(state, timeline.moves[i]);
+        state = result.state;
+    }
+    return state;
+}
+// 타임라인에 이동 추가
+export function addMoveToTimeline(timeline, direction, currentState) {
+    const moveResult = move(currentState, direction);
+    if (moveResult.state === currentState) {
+        // 이동 실패 - 타임라인 변경 없음
+        return { timeline, moveResult };
+    }
+    // 현재 인덱스 이후의 기록이 있으면 분기 발생 (일단 덮어씀)
+    const newMoves = [...timeline.moves.slice(0, timeline.currentIndex), direction];
+    const newIndex = timeline.currentIndex + 1;
+    // 레벨업 인덱스 업데이트
+    let newLevelUpIndices = timeline.levelUpIndices.filter(i => i < newIndex);
+    if (moveResult.leveledUp) {
+        newLevelUpIndices = [...newLevelUpIndices, newIndex];
+    }
+    return {
+        timeline: {
+            ...timeline,
+            moves: newMoves,
+            currentIndex: newIndex,
+            levelUpIndices: newLevelUpIndices,
+        },
+        moveResult,
+    };
+}
+// 타임라인에서 undo (1수)
+export function undoTimeline(timeline) {
+    if (timeline.currentIndex <= 0) {
+        return timeline;
+    }
+    return {
+        ...timeline,
+        currentIndex: timeline.currentIndex - 1,
+    };
+}
+// 타임라인에서 redo (1수)
+export function redoTimeline(timeline) {
+    if (timeline.currentIndex >= timeline.moves.length) {
+        return timeline;
+    }
+    return {
+        ...timeline,
+        currentIndex: timeline.currentIndex + 1,
+    };
+}
+// 강력 undo (이전 레벨 시작점으로)
+export function strongUndoTimeline(timeline) {
+    // 현재 인덱스보다 작은 레벨업 인덱스 중 가장 큰 것 찾기
+    const previousLevelIndex = [...timeline.levelUpIndices]
+        .reverse()
+        .find(i => i < timeline.currentIndex);
+    if (previousLevelIndex === undefined) {
+        return { ...timeline, currentIndex: 0 };
+    }
+    return {
+        ...timeline,
+        currentIndex: previousLevelIndex,
+    };
+}
+// 강력 redo (다음 레벨 시작점으로)
+export function strongRedoTimeline(timeline) {
+    // 현재 인덱스보다 큰 레벨업 인덱스 중 가장 작은 것 찾기
+    const nextLevelIndex = timeline.levelUpIndices.find(i => i > timeline.currentIndex);
+    if (nextLevelIndex === undefined) {
+        // 다음 레벨업 지점이 없으면 끝까지
+        return { ...timeline, currentIndex: timeline.moves.length };
+    }
+    return {
+        ...timeline,
+        currentIndex: nextLevelIndex,
+    };
+}
+// 타임라인을 특정 인덱스로 이동
+export function seekTimeline(timeline, targetIndex) {
+    const clampedIndex = Math.max(0, Math.min(targetIndex, timeline.moves.length));
+    return {
+        ...timeline,
+        currentIndex: clampedIndex,
+    };
+}
 //# sourceMappingURL=game.js.map

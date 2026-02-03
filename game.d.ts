@@ -1,4 +1,4 @@
-import { GameState, Position, Direction, RomanChar, PlacedTile } from './types.js';
+import { GameState, Position, Direction, RomanChar, PlacedTile, GameTimeline } from './types.js';
 export declare function createInitialState(viewportSize?: number): GameState;
 export declare function getNextQuest(level: number): string;
 export declare function getCurrentRequiredChar(state: GameState): RomanChar | null;
@@ -28,4 +28,15 @@ export interface GameStatus {
     isGameOver: boolean;
 }
 export declare function getGameStatus(state: GameState): GameStatus;
+export declare function createTimeline(viewportSize?: number): GameTimeline;
+export declare function getStateAtIndex(timeline: GameTimeline, targetIndex: number): GameState;
+export declare function addMoveToTimeline(timeline: GameTimeline, direction: Direction, currentState: GameState): {
+    timeline: GameTimeline;
+    moveResult: MoveResult;
+};
+export declare function undoTimeline(timeline: GameTimeline): GameTimeline;
+export declare function redoTimeline(timeline: GameTimeline): GameTimeline;
+export declare function strongUndoTimeline(timeline: GameTimeline): GameTimeline;
+export declare function strongRedoTimeline(timeline: GameTimeline): GameTimeline;
+export declare function seekTimeline(timeline: GameTimeline, targetIndex: number): GameTimeline;
 //# sourceMappingURL=game.d.ts.map

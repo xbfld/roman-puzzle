@@ -19,6 +19,12 @@ export interface GameState {
     viewportSize: number;
 }
 export type Direction = 'up' | 'down' | 'left' | 'right';
+export interface GameTimeline {
+    viewportSize: number;
+    moves: Direction[];
+    currentIndex: number;
+    levelUpIndices: number[];
+}
 export type GameEvent = {
     type: 'move';
     direction: Direction;
