@@ -1,5 +1,7 @@
 import { createInitialState, resetGame, move, createTimeline, addMoveToTimeline, undoTimeline, redoTimeline, strongUndoTimeline, strongRedoTimeline, seekTimeline, } from './game.js';
 import { GameRenderer } from './renderer.js';
+const STORAGE_KEY = 'roman-puzzle-saves';
+const MAX_SLOTS = 5;
 class RomanPuzzleGame {
     constructor(containerId, viewportSize = 11) {
         // 퍼포먼스 최적화: 체크포인트 캐싱
@@ -19,8 +21,12 @@ class RomanPuzzleGame {
             onSeek: (index) => this.handleSeek(index),
             onSave: () => this.handleSave(),
             onLoad: () => this.handleLoad(),
+            onSaveSlot: (slotId) => this.handleSaveSlot(slotId),
+            onLoadSlot: (slotId) => this.handleLoadSlot(slotId),
         });
         this.render();
+        // 세이브 슬롯 초기화
+        this.renderer.updateSaveSlots(this.getSaveSlots());
     }
     handleMove(direction) {
         const { timeline: newTimeline, moveResult } = addMoveToTimeline(this.timeline, direction, this.state);
@@ -232,6 +238,94 @@ class RomanPuzzleGame {
                 this.cacheState(i + 1, state);
             }
         }
+    }
+    // === 세이브 슬롯 관리 ===
+    getLocalSaveData() {
+        try {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                return JSON.parse(data);
+            }
+        }
+        catch (e) {
+            console.error('세이브 데이터 로드 실패:', e);
+        }
+        return {
+            version: 1,
+            slots: new Array(MAX_SLOTS).fill(null),
+            lastSlot: 0,
+        };
+    }
+    saveLocalData(data) {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+        catch (e) {
+            console.error('세이브 데이터 저장 실패:', e);
+        }
+    }
+    getMoveString() {
+        const dirMap = {
+            up: 'U',
+            down: 'D',
+            left: 'L',
+            right: 'R',
+        };
+        return this.timeline.moves.map(d => dirMap[d]).join('');
+    }
+    handleSaveSlot(slotId) {
+        if (slotId < 0 || slotId >= MAX_SLOTS)
+            return;
+        const data = this.getLocalSaveData();
+        const slot = {
+            id: slotId,
+            name: `슬롯 ${slotId + 1}`,
+            viewportSize: this.timeline.viewportSize,
+            moves: this.getMoveString(),
+            currentIndex: this.timeline.currentIndex,
+            level: this.state.level,
+            updatedAt: Date.now(),
+        };
+        data.slots[slotId] = slot;
+        data.lastSlot = slotId;
+        this.saveLocalData(data);
+        this.renderer.showMessage(`슬롯 ${slotId + 1} 저장됨 (Lv.${this.state.level})`);
+        this.renderer.updateSaveSlots(data.slots);
+    }
+    handleLoadSlot(slotId) {
+        if (slotId < 0 || slotId >= MAX_SLOTS)
+            return;
+        const data = this.getLocalSaveData();
+        const slot = data.slots[slotId];
+        if (!slot) {
+            this.renderer.showMessage(`슬롯 ${slotId + 1} 비어있음`);
+            return;
+        }
+        // 타임라인 복원
+        const dirMap = {
+            U: 'up',
+            D: 'down',
+            L: 'left',
+            R: 'right',
+        };
+        const moves = slot.moves.split('').map(c => dirMap[c]);
+        const levelUpIndices = this.calculateLevelUpIndices(slot.viewportSize, moves);
+        this.timeline = {
+            viewportSize: slot.viewportSize,
+            moves,
+            currentIndex: slot.currentIndex,
+            levelUpIndices,
+        };
+        this.stateCache.clear();
+        this.rebuildStateSync();
+        this.rebuildCache();
+        data.lastSlot = slotId;
+        this.saveLocalData(data);
+        this.render();
+        this.renderer.showMessage(`슬롯 ${slotId + 1} 불러옴 (Lv.${this.state.level})`);
+    }
+    getSaveSlots() {
+        return this.getLocalSaveData().slots;
     }
     handlePlaceTile(position, tile) {
         // 자동 배치로 변경되어 수동 배치는 사용하지 않음

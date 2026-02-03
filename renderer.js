@@ -6,6 +6,7 @@ export class GameRenderer {
         this.lastMoveDirection = null;
         this.currentState = null;
         this.currentTimeline = null;
+        this.saveSlotContainer = null;
         const container = document.getElementById(containerId);
         if (!container) {
             throw new Error(`Container with id "${containerId}" not found`);
@@ -20,6 +21,8 @@ export class GameRenderer {
         this.onSeek = callbacks.onSeek;
         this.onSave = callbacks.onSave;
         this.onLoad = callbacks.onLoad;
+        this.onSaveSlot = callbacks.onSaveSlot;
+        this.onLoadSlot = callbacks.onLoadSlot;
         // 컨테이너 구조 생성
         this.container.innerHTML = `
       <div class="game-header">
@@ -60,11 +63,22 @@ export class GameRenderer {
           <span class="timeline-position">0 / 0</span>
         </div>
       </div>
+      <div class="save-slot-container">
+        <div class="save-slot-label">세이브 슬롯</div>
+        <div class="save-slots">
+          <button class="save-slot" data-slot="0"><span class="slot-num">1</span><span class="slot-info">빈 슬롯</span></button>
+          <button class="save-slot" data-slot="1"><span class="slot-num">2</span><span class="slot-info">빈 슬롯</span></button>
+          <button class="save-slot" data-slot="2"><span class="slot-num">3</span><span class="slot-info">빈 슬롯</span></button>
+          <button class="save-slot" data-slot="3"><span class="slot-num">4</span><span class="slot-info">빈 슬롯</span></button>
+          <button class="save-slot" data-slot="4"><span class="slot-num">5</span><span class="slot-info">빈 슬롯</span></button>
+        </div>
+        <div class="save-slot-hint">클릭: 불러오기 / Shift+클릭: 저장</div>
+      </div>
       <div class="game-footer">
         <div class="controls-info desktop-only">
           <p><strong>Move:</strong> Arrow / WASD</p>
-          <p><strong>Undo/Redo:</strong> Z / Y (Shift: 레벨 단위)</p>
-          <p><strong>Save/Load:</strong> C / V</p>
+          <p><strong>Undo/Redo:</strong> Z / Y (Shift: 레벨)</p>
+          <p><strong>Slot:</strong> 1-5 (Shift: 저장)</p>
         </div>
         <div class="controls-info mobile-only">
           <p><strong>터치로 이동</strong></p>
@@ -88,6 +102,20 @@ export class GameRenderer {
         timelineSlider.addEventListener('input', (e) => {
             const target = e.target;
             this.onSeek(parseInt(target.value, 10));
+        });
+        // 세이브 슬롯 이벤트
+        this.saveSlotContainer = this.container.querySelector('.save-slot-container');
+        const saveSlots = this.container.querySelectorAll('.save-slot');
+        saveSlots.forEach((slot) => {
+            slot.addEventListener('click', (e) => {
+                const slotId = parseInt(slot.dataset.slot || '0', 10);
+                if (e.shiftKey) {
+                    this.onSaveSlot(slotId);
+                }
+                else {
+                    this.onLoadSlot(slotId);
+                }
+            });
         });
         // 버튼 이벤트
         const resetButton = this.container.querySelector('.reset-button');
@@ -184,6 +212,18 @@ export class GameRenderer {
             if (e.key === 'v' || e.key === 'V') {
                 e.preventDefault();
                 this.onLoad();
+                return;
+            }
+            // 슬롯 1-5: 숫자키 (Shift: 저장, 일반: 불러오기)
+            if (e.key >= '1' && e.key <= '5') {
+                e.preventDefault();
+                const slotId = parseInt(e.key, 10) - 1;
+                if (e.shiftKey) {
+                    this.onSaveSlot(slotId);
+                }
+                else {
+                    this.onLoadSlot(slotId);
+                }
                 return;
             }
             switch (e.key) {
@@ -439,6 +479,26 @@ export class GameRenderer {
         setTimeout(() => {
             msgEl.remove();
         }, 1000);
+    }
+    // 세이브 슬롯 UI 업데이트
+    updateSaveSlots(slots) {
+        if (!this.saveSlotContainer)
+            return;
+        const slotButtons = this.saveSlotContainer.querySelectorAll('.save-slot');
+        slotButtons.forEach((btn, i) => {
+            const infoEl = btn.querySelector('.slot-info');
+            if (!infoEl)
+                return;
+            const slot = slots[i];
+            if (slot) {
+                infoEl.textContent = `Lv.${slot.level}`;
+                btn.classList.add('has-data');
+            }
+            else {
+                infoEl.textContent = '빈 슬롯';
+                btn.classList.remove('has-data');
+            }
+        });
     }
 }
 //# sourceMappingURL=renderer.js.map
