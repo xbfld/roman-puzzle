@@ -51,10 +51,9 @@
     .status-container {
       display: flex;
       justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-      min-height: 80px;
-      align-items: flex-start;
+      gap: 10px;
+      height: 60px;
+      align-items: center;
     }
 
     .status-item {
@@ -62,47 +61,52 @@
       flex-direction: column;
       align-items: center;
       background: #f8f4ef;
-      padding: 12px 20px;
-      border-radius: 12px;
-      min-width: 80px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      min-width: 60px;
       border: 1px solid #e8e0d5;
+      height: 50px;
+      justify-content: center;
     }
 
     .status-item.quest-status {
-      flex-grow: 1;
-      max-width: 300px;
-      min-height: 70px;
+      flex: 1;
+      max-width: 200px;
+      min-width: 100px;
     }
 
     .status-label {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       color: #888;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .status-value {
-      font-size: 1.4rem;
+      font-size: 1.2rem;
       font-weight: bold;
       color: #333;
     }
 
     .quest-status .status-value {
-      font-size: 1.2rem;
+      font-size: 1rem;
       display: flex;
       align-items: center;
-      gap: 4px;
-      flex-wrap: wrap;
+      gap: 2px;
+      flex-wrap: nowrap;
       justify-content: center;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     .char-done {
       color: #4caf50;
       background: #e8f5e9;
-      padding: 2px 8px;
-      border-radius: 4px;
+      padding: 1px 4px;
+      border-radius: 3px;
       position: relative;
+      font-size: 0.9rem;
     }
 
     .char-done::after {
@@ -112,32 +116,32 @@
       top: 50%;
       transform: translate(-50%, -50%);
       width: 100%;
-      height: 2px;
+      height: 1px;
       background: #4caf50;
     }
 
     .char-current {
       color: #fff;
       background: #ff9800;
-      padding: 2px 8px;
-      border-radius: 4px;
+      padding: 1px 4px;
+      border-radius: 3px;
       font-weight: bold;
+      font-size: 0.9rem;
       animation: pulse 1s infinite;
     }
 
     .char-pending {
       color: #999;
       background: #f0f0f0;
-      padding: 2px 8px;
-      border-radius: 4px;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 0.9rem;
     }
 
     .return-hint {
-      display: block;
-      width: 100%;
       color: #4caf50;
-      font-size: 0.85rem;
-      margin-top: 8px;
+      font-size: 0.7rem;
+      margin-left: 4px;
       animation: pulse 1s infinite;
     }
 
@@ -664,31 +668,25 @@
       text-decoration: underline;
     }
 
-    /* 도움말 모달 */
-    .title-row {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
+    /* 도움말 버튼 */
     .help-button {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      border: 2px solid #d4c8b8;
-      background: #f8f4ef;
-      color: #8b4513;
+      border: none;
+      background: linear-gradient(145deg, #78909c 0%, #546e7a 100%);
+      color: #fff;
       font-size: 1.1rem;
       font-weight: bold;
       cursor: pointer;
       transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(84, 110, 122, 0.3);
     }
 
     .help-button:hover {
-      background: #8b4513;
-      color: #fff;
-      border-color: #8b4513;
+      background: linear-gradient(145deg, #90a4ae 0%, #78909c 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(84, 110, 122, 0.4);
     }
 
     .help-modal {

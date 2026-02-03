@@ -62,10 +62,7 @@ export class GameRenderer {
     // 컨테이너 구조 생성
     this.container.innerHTML = `
       <div class="game-header">
-        <div class="title-row">
-          <h1>3999</h1>
-          <button class="help-button">?</button>
-        </div>
+        <h1>3999</h1>
         <div class="status-container"></div>
       </div>
       <div class="help-modal hidden">
@@ -120,6 +117,7 @@ export class GameRenderer {
           <p><strong>터치로 이동</strong></p>
         </div>
         <div class="button-group">
+          <button class="help-button">?</button>
           <button class="undo-button">Undo</button>
           <button class="redo-button">Redo</button>
           <button class="reset-button">Reset</button>
@@ -380,7 +378,7 @@ export class GameRenderer {
     if (status.isOnQuest || state.currentQuest) {
       questDisplay = this.getQuestProgressDisplay(status.currentQuest, status.questProgress, status.isOnQuest);
       if (status.isComplete) {
-        questDisplay += ' <span class="return-hint">Return to shelter!</span>';
+        questDisplay += '<span class="return-hint">→⛺</span>';
       }
     }
 
