@@ -79,22 +79,26 @@ const romanColors: Record<string, string> = {
 }
 
 const CellContent = styled.span<{ $isPlayer: boolean; $isOldTile: boolean; $char?: string }>`
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   color: ${props => {
-    if (props.$isPlayer) return '#fff'
-    if (props.$isOldTile) return '#aaa'
     if (props.$char && romanColors[props.$char]) return romanColors[props.$char]
+    if (props.$isPlayer) return '#fff'
+    if (props.$isOldTile) return '#999'
     return theme.colors.primary
   }};
-  text-shadow: ${props => props.$isPlayer ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'};
+  text-shadow: ${props => {
+    if (props.$isPlayer) return '0 0 4px rgba(255,255,255,0.8), 0 1px 2px rgba(0,0,0,0.5)'
+    return 'none'
+  }};
   font-weight: bold;
+  z-index: 1;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   @media (max-width: ${theme.breakpoints.mobile}) {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 `
 
