@@ -33,6 +33,14 @@ export interface GameState {
 // 이동 방향
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
+// 게임 타임라인 (인풋 기반 히스토리)
+export interface GameTimeline {
+  viewportSize: number;
+  moves: Direction[];        // 모든 이동 기록
+  currentIndex: number;      // 현재 위치 (0 ~ moves.length)
+  levelUpIndices: number[];  // 레벨업 발생 시점 (move index)
+}
+
 // 게임 이벤트 타입
 export type GameEvent =
   | { type: 'move'; direction: Direction }

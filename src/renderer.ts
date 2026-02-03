@@ -1,4 +1,4 @@
-import { GameState, Position, RomanChar, posToKey } from './types.js';
+import { GameState, Position, RomanChar, posToKey, GameTimeline } from './types.js';
 import { getValidMoves, getGameStatus, getTileAt, getPlacedTileAt } from './game.js';
 
 export class GameRenderer {
@@ -6,13 +6,18 @@ export class GameRenderer {
   private statusContainer: HTMLElement;
   private gridContainer: HTMLElement;
   private levelUpContainer: HTMLElement;
+  private timelineContainer: HTMLElement | null = null;
   private lastMoveDirection: 'up' | 'down' | 'left' | 'right' | null = null;
   private currentState: GameState | null = null;
+  private currentTimeline: GameTimeline | null = null;
 
   private onMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
   private onReset: () => void;
   private onUndo: () => void;
   private onRedo: () => void;
+  private onStrongUndo: () => void;
+  private onStrongRedo: () => void;
+  private onSeek: (index: number) => void;
   private onSave: () => void;
   private onLoad: () => void;
 
@@ -24,6 +29,9 @@ export class GameRenderer {
       onReset: () => void;
       onUndo: () => void;
       onRedo: () => void;
+      onStrongUndo: () => void;
+      onStrongRedo: () => void;
+      onSeek: (index: number) => void;
       onSave: () => void;
       onLoad: () => void;
     }
@@ -38,6 +46,9 @@ export class GameRenderer {
     this.onReset = callbacks.onReset;
     this.onUndo = callbacks.onUndo;
     this.onRedo = callbacks.onRedo;
+    this.onStrongUndo = callbacks.onStrongUndo;
+    this.onStrongRedo = callbacks.onStrongRedo;
+    this.onSeek = callbacks.onSeek;
     this.onSave = callbacks.onSave;
     this.onLoad = callbacks.onLoad;
 
@@ -72,10 +83,19 @@ export class GameRenderer {
         <div class="grid-container"></div>
         <div class="level-up-container"></div>
       </div>
+      <div class="timeline-container">
+        <div class="timeline-track">
+          <div class="timeline-markers"></div>
+          <input type="range" class="timeline-slider" min="0" max="0" value="0">
+        </div>
+        <div class="timeline-info">
+          <span class="timeline-position">0 / 0</span>
+        </div>
+      </div>
       <div class="game-footer">
         <div class="controls-info desktop-only">
           <p><strong>Move:</strong> Arrow / WASD</p>
-          <p><strong>Undo/Redo:</strong> Z / Y</p>
+          <p><strong>Undo/Redo:</strong> Z / Y (Shift: 레벨 단위)</p>
           <p><strong>Save/Load:</strong> C / V</p>
         </div>
         <div class="controls-info mobile-only">
@@ -95,6 +115,14 @@ export class GameRenderer {
     this.statusContainer = this.container.querySelector('.status-container')!;
     this.gridContainer = this.container.querySelector('.grid-container')!;
     this.levelUpContainer = this.container.querySelector('.level-up-container')!;
+    this.timelineContainer = this.container.querySelector('.timeline-container')!;
+
+    // 타임라인 슬라이더 이벤트
+    const timelineSlider = this.container.querySelector('.timeline-slider') as HTMLInputElement;
+    timelineSlider.addEventListener('input', (e) => {
+      const target = e.target as HTMLInputElement;
+      this.onSeek(parseInt(target.value, 10));
+    });
 
     // 버튼 이벤트
     const resetButton = this.container.querySelector('.reset-button')!;
@@ -168,10 +196,24 @@ export class GameRenderer {
 
   private setupKeyboardControls(): void {
     document.addEventListener('keydown', (e) => {
+      // Strong Undo: Shift+Z (레벨 단위)
+      if ((e.key === 'z' || e.key === 'Z') && e.shiftKey) {
+        e.preventDefault();
+        this.onStrongUndo();
+        return;
+      }
+
       // Undo: Z
       if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault();
         this.onUndo();
+        return;
+      }
+
+      // Strong Redo: Shift+Y (레벨 단위)
+      if ((e.key === 'y' || e.key === 'Y') && e.shiftKey) {
+        e.preventDefault();
+        this.onStrongRedo();
         return;
       }
 
@@ -225,15 +267,50 @@ export class GameRenderer {
     });
   }
 
-  render(state: GameState, moveDirection?: 'up' | 'down' | 'left' | 'right'): void {
+  render(state: GameState, timeline?: GameTimeline, moveDirection?: 'up' | 'down' | 'left' | 'right'): void {
     this.currentState = state;
+    if (timeline) {
+      this.currentTimeline = timeline;
+    }
     this.renderStatus(state);
     this.renderGrid(state, moveDirection);
+    if (timeline) {
+      this.renderTimeline(timeline);
+    }
 
     // 결과 복사 버튼 이벤트
     const copyBtn = this.statusContainer.querySelector('.copy-result-btn');
     if (copyBtn) {
       copyBtn.addEventListener('click', () => this.copyResult(state));
+    }
+  }
+
+  private renderTimeline(timeline: GameTimeline): void {
+    if (!this.timelineContainer) return;
+
+    const slider = this.timelineContainer.querySelector('.timeline-slider') as HTMLInputElement;
+    const positionDisplay = this.timelineContainer.querySelector('.timeline-position')!;
+    const markersContainer = this.timelineContainer.querySelector('.timeline-markers')!;
+
+    // 슬라이더 업데이트
+    slider.max = String(timeline.moves.length);
+    slider.value = String(timeline.currentIndex);
+
+    // 위치 표시
+    positionDisplay.textContent = `${timeline.currentIndex} / ${timeline.moves.length}`;
+
+    // 레벨업 마커 표시
+    if (timeline.moves.length > 0) {
+      markersContainer.innerHTML = '';
+      timeline.levelUpIndices.forEach((idx, level) => {
+        if (idx === 0) return; // 시작점 제외
+        const marker = document.createElement('div');
+        marker.className = 'timeline-marker';
+        marker.style.left = `${(idx / timeline.moves.length) * 100}%`;
+        marker.title = `Lv.${level + 1}`;
+        marker.addEventListener('click', () => this.onSeek(idx));
+        markersContainer.appendChild(marker);
+      });
     }
   }
 

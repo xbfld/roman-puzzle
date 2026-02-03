@@ -1,15 +1,20 @@
-import { GameState, Position, RomanChar } from './types.js';
+import { GameState, Position, RomanChar, GameTimeline } from './types.js';
 export declare class GameRenderer {
     private container;
     private statusContainer;
     private gridContainer;
     private levelUpContainer;
+    private timelineContainer;
     private lastMoveDirection;
     private currentState;
+    private currentTimeline;
     private onMove;
     private onReset;
     private onUndo;
     private onRedo;
+    private onStrongUndo;
+    private onStrongRedo;
+    private onSeek;
     private onSave;
     private onLoad;
     constructor(containerId: string, callbacks: {
@@ -18,12 +23,16 @@ export declare class GameRenderer {
         onReset: () => void;
         onUndo: () => void;
         onRedo: () => void;
+        onStrongUndo: () => void;
+        onStrongRedo: () => void;
+        onSeek: (index: number) => void;
         onSave: () => void;
         onLoad: () => void;
     });
     private setupTouchControls;
     private setupKeyboardControls;
-    render(state: GameState, moveDirection?: 'up' | 'down' | 'left' | 'right'): void;
+    render(state: GameState, timeline?: GameTimeline, moveDirection?: 'up' | 'down' | 'left' | 'right'): void;
+    private renderTimeline;
     private copyResult;
     private renderStatus;
     private getQuestProgressDisplay;
