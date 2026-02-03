@@ -41,6 +41,24 @@ export interface GameTimeline {
   levelUpIndices: number[];  // 레벨업 발생 시점 (move index)
 }
 
+// 세이브 슬롯
+export interface SaveSlot {
+  id: number;
+  name: string;
+  viewportSize: number;
+  moves: string;             // 압축된 이동 기록 (UDLR...)
+  currentIndex: number;
+  level: number;             // 표시용 레벨
+  updatedAt: number;         // 타임스탬프
+}
+
+// 로컬 저장 데이터
+export interface LocalSaveData {
+  version: number;
+  slots: (SaveSlot | null)[];
+  lastSlot: number;          // 마지막으로 사용한 슬롯
+}
+
 // 게임 이벤트 타입
 export type GameEvent =
   | { type: 'move'; direction: Direction }

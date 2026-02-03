@@ -513,6 +513,81 @@
       color: #8b4513;
     }
 
+    /* 세이브 슬롯 */
+    .save-slot-container {
+      margin-bottom: 15px;
+      padding: 10px 15px;
+      background: #f8f4ef;
+      border-radius: 8px;
+      border: 1px solid #e8e0d5;
+    }
+
+    .save-slot-label {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .save-slots {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .save-slot {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 12px;
+      background: #fff;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-width: 50px;
+    }
+
+    .save-slot:hover {
+      border-color: #8b4513;
+      background: #fff8f0;
+    }
+
+    .save-slot.has-data {
+      border-color: #4caf50;
+      background: #f0fff0;
+    }
+
+    .save-slot.has-data:hover {
+      border-color: #2e7d32;
+    }
+
+    .slot-num {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #8b4513;
+    }
+
+    .slot-info {
+      font-size: 0.65rem;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .save-slot.has-data .slot-info {
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    .save-slot-hint {
+      font-size: 0.7rem;
+      color: #999;
+      text-align: center;
+      margin-top: 8px;
+    }
+
     .game-footer {
       display: flex;
       justify-content: space-between;

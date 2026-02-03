@@ -25,6 +25,20 @@ export interface GameTimeline {
     currentIndex: number;
     levelUpIndices: number[];
 }
+export interface SaveSlot {
+    id: number;
+    name: string;
+    viewportSize: number;
+    moves: string;
+    currentIndex: number;
+    level: number;
+    updatedAt: number;
+}
+export interface LocalSaveData {
+    version: number;
+    slots: (SaveSlot | null)[];
+    lastSlot: number;
+}
 export type GameEvent = {
     type: 'move';
     direction: Direction;
