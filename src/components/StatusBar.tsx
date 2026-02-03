@@ -1,8 +1,18 @@
 import styled, { css } from 'styled-components'
 import { theme } from '../styles/theme'
 import { pulse } from '../styles/animations'
-import { GameState } from '../lib/types'
+import { GameState, RomanChar } from '../lib/types'
 import { getGameStatus } from '../lib/game'
+
+const romanColors: Record<string, string> = {
+  I: theme.colors.romanI,
+  V: theme.colors.romanV,
+  X: theme.colors.romanX,
+  L: theme.colors.romanL,
+  C: theme.colors.romanC,
+  D: theme.colors.romanD,
+  M: theme.colors.romanM,
+}
 
 interface StatusBarProps {
   state: GameState
@@ -60,42 +70,31 @@ const QuestValue = styled.span`
   overflow: hidden;
 `
 
-const CharDone = styled.span`
-  color: ${theme.colors.success};
-  background: ${theme.colors.successLight};
-  padding: 1px 4px;
+const CharBase = styled.span<{ $color: string }>`
+  padding: 2px 6px;
   border-radius: 3px;
-  position: relative;
-  font-size: 0.9rem;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 1px;
-    background: ${theme.colors.success};
-  }
-`
-
-const CharCurrent = styled.span`
-  color: #fff;
-  background: ${theme.colors.warning};
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-size: 0.85rem;
   font-weight: bold;
-  font-size: 0.9rem;
-  animation: ${pulse} 1s infinite;
+  color: ${props => props.$color};
+  background: ${props => `${props.$color}18`};
+  border: 1px solid ${props => `${props.$color}40`};
 `
 
-const CharPending = styled.span`
-  color: ${theme.colors.textDisabled};
-  background: #f0f0f0;
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 0.9rem;
+const CharDone = styled(CharBase)`
+  opacity: 0.5;
+  text-decoration: line-through;
+`
+
+const CharCurrent = styled(CharBase)`
+  animation: ${pulse} 1s infinite;
+  box-shadow: 0 0 8px ${props => `${props.$color}60`};
+`
+
+const CharPending = styled(CharBase)`
+  opacity: 0.4;
+  background: #f5f5f5;
+  border-color: #ddd;
+  color: #999;
 `
 
 const ReturnHint = styled.span`
@@ -113,19 +112,20 @@ export function StatusBar({ state }: StatusBarProps) {
       return '-'
     }
 
-    const chars = state.currentQuest.split('')
+    const chars = state.currentQuest.split('') as RomanChar[]
     return (
       <>
         {chars.map((char, i) => {
+          const color = romanColors[char] || theme.colors.primary
           if (i < status.questProgress) {
-            return <CharDone key={i}>{char}</CharDone>
+            return <CharDone key={i} $color={color}>{char}</CharDone>
           }
           if (i === status.questProgress && status.isOnQuest) {
-            return <CharCurrent key={i}>{char}</CharCurrent>
+            return <CharCurrent key={i} $color={color}>{char}</CharCurrent>
           }
-          return <CharPending key={i}>{char}</CharPending>
+          return <CharPending key={i} $color={color}>{char}</CharPending>
         })}
-        {status.isComplete && <ReturnHint>→⛺</ReturnHint>}
+        {status.isComplete && <ReturnHint>→◇</ReturnHint>}
       </>
     )
   }

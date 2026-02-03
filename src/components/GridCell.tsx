@@ -1,7 +1,7 @@
 import { memo } from 'react'
 import styled, { css } from 'styled-components'
 import { theme } from '../styles/theme'
-import { playerPulse, tentPulse, glow } from '../styles/animations'
+import { playerPulse, glow } from '../styles/animations'
 import { PlacedTile } from '../lib/types'
 
 interface GridCellProps {
@@ -68,10 +68,26 @@ const CellContainer = styled.div<{
   `}
 `
 
-const CellContent = styled.span<{ $isPlayer: boolean; $isOldTile: boolean }>`
+const romanColors: Record<string, string> = {
+  I: theme.colors.romanI,
+  V: theme.colors.romanV,
+  X: theme.colors.romanX,
+  L: theme.colors.romanL,
+  C: theme.colors.romanC,
+  D: theme.colors.romanD,
+  M: theme.colors.romanM,
+}
+
+const CellContent = styled.span<{ $isPlayer: boolean; $isOldTile: boolean; $char?: string }>`
   font-size: 1.2rem;
-  color: ${props => props.$isPlayer ? '#fff' : props.$isOldTile ? '#888' : theme.colors.primary};
+  color: ${props => {
+    if (props.$isPlayer) return '#fff'
+    if (props.$isOldTile) return '#aaa'
+    if (props.$char && romanColors[props.$char]) return romanColors[props.$char]
+    return theme.colors.primary
+  }};
   text-shadow: ${props => props.$isPlayer ? '0 1px 2px rgba(0,0,0,0.3)' : 'none'};
+  font-weight: bold;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
     font-size: 1rem;
@@ -79,17 +95,6 @@ const CellContent = styled.span<{ $isPlayer: boolean; $isOldTile: boolean }>`
 
   @media (max-width: ${theme.breakpoints.mobile}) {
     font-size: 0.9rem;
-  }
-`
-
-const TentIcon = styled.span<{ $isValidMove: boolean }>`
-  font-size: 1.4rem;
-  ${props => props.$isValidMove && css`
-    animation: ${tentPulse} 1s ease-in-out infinite;
-  `}
-
-  @media (max-width: ${theme.breakpoints.tablet}) {
-    font-size: 1.2rem;
   }
 `
 
@@ -130,12 +135,10 @@ const GridCellComponent = ({
         <CellContent $isPlayer={true} $isOldTile={false}>●</CellContent>
       ) : tile ? (
         <>
-          <CellContent $isPlayer={false} $isOldTile={isOldTile}>{tile.char}</CellContent>
+          <CellContent $isPlayer={false} $isOldTile={isOldTile} $char={tile.char}>{tile.char}</CellContent>
           {isOldTile && <LevelBadge>Lv{tile.level}</LevelBadge>}
         </>
-      ) : (
-        <TentIcon $isValidMove={isValidMove}>⛺</TentIcon>
-      )}
+      ) : null}
     </CellContainer>
   )
 }

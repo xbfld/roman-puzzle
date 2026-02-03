@@ -18,6 +18,15 @@ export const theme = {
     roman: '#fff8e1',
     romanBorder: '#ffcc80',
 
+    // 로마숫자 무지개색 (I, V, X, L, C, D, M)
+    romanI: '#e53935',  // 빨강
+    romanV: '#ff9800',  // 주황
+    romanX: '#fdd835',  // 노랑
+    romanL: '#43a047',  // 초록
+    romanC: '#1e88e5',  // 파랑
+    romanD: '#5e35b1',  // 남색
+    romanM: '#8e24aa',  // 보라
+
     text: '#333',
     textLight: '#666',
     textMuted: '#888',
