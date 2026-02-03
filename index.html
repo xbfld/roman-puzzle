@@ -316,6 +316,17 @@
       50% { transform: scale(1.08); }
     }
 
+    .tent-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+      animation: tentPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes tentPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
     .level-up-container {
       position: absolute;
       top: 50%;
@@ -671,6 +682,10 @@
       .level-badge {
         font-size: 0.5rem;
         padding: 1px 3px;
+      }
+
+      .tent-icon {
+        font-size: 1.2rem;
       }
 
       .controls-info {

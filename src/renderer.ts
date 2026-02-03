@@ -359,10 +359,17 @@ export class GameRenderer {
           levelBadge.textContent = `Lv.${state.level}`;
           playerWrapper.appendChild(levelBadge);
 
-          // 캐릭터 (CSS로 표현)
-          const playerMarker = document.createElement('div');
-          playerMarker.className = 'player-marker';
-          playerWrapper.appendChild(playerMarker);
+          // 쉼터에 있으면 텐트, 아니면 캐릭터
+          if (tile === null) {
+            const tentIcon = document.createElement('div');
+            tentIcon.className = 'tent-icon';
+            tentIcon.textContent = '⛺';
+            playerWrapper.appendChild(tentIcon);
+          } else {
+            const playerMarker = document.createElement('div');
+            playerMarker.className = 'player-marker';
+            playerWrapper.appendChild(playerMarker);
+          }
 
           cell.appendChild(playerWrapper);
         }
