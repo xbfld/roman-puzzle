@@ -7,11 +7,14 @@ export class GameRenderer {
   private gridContainer: HTMLElement;
   private levelUpContainer: HTMLElement;
   private lastMoveDirection: 'up' | 'down' | 'left' | 'right' | null = null;
+  private currentState: GameState | null = null;
 
   private onMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
   private onReset: () => void;
   private onUndo: () => void;
   private onRedo: () => void;
+  private onSave: () => void;
+  private onLoad: () => void;
 
   constructor(
     containerId: string,
@@ -21,6 +24,8 @@ export class GameRenderer {
       onReset: () => void;
       onUndo: () => void;
       onRedo: () => void;
+      onSave: () => void;
+      onLoad: () => void;
     }
   ) {
     const container = document.getElementById(containerId);
@@ -33,6 +38,8 @@ export class GameRenderer {
     this.onReset = callbacks.onReset;
     this.onUndo = callbacks.onUndo;
     this.onRedo = callbacks.onRedo;
+    this.onSave = callbacks.onSave;
+    this.onLoad = callbacks.onLoad;
 
     // 컨테이너 구조 생성
     this.container.innerHTML = `
@@ -46,8 +53,9 @@ export class GameRenderer {
       </div>
       <div class="game-footer">
         <div class="controls-info">
-          <p><strong>Move:</strong> Arrow keys, WASD, or click</p>
+          <p><strong>Move:</strong> Arrow / WASD</p>
           <p><strong>Undo/Redo:</strong> Z / Y</p>
+          <p><strong>Save/Load:</strong> C / V</p>
         </div>
         <div class="button-group">
           <button class="undo-button">Undo</button>
@@ -91,6 +99,20 @@ export class GameRenderer {
         return;
       }
 
+      // Save: C
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        this.onSave();
+        return;
+      }
+
+      // Load: V
+      if (e.key === 'v' || e.key === 'V') {
+        e.preventDefault();
+        this.onLoad();
+        return;
+      }
+
       switch (e.key) {
         case 'ArrowUp':
         case 'w':
@@ -121,8 +143,30 @@ export class GameRenderer {
   }
 
   render(state: GameState, moveDirection?: 'up' | 'down' | 'left' | 'right'): void {
+    this.currentState = state;
     this.renderStatus(state);
     this.renderGrid(state, moveDirection);
+
+    // 결과 복사 버튼 이벤트
+    const copyBtn = this.statusContainer.querySelector('.copy-result-btn');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => this.copyResult(state));
+    }
+  }
+
+  private async copyResult(state: GameState): Promise<void> {
+    const status = getGameStatus(state);
+    const result = `🏛️ Roman Puzzle 결과\n` +
+      `레벨: ${status.level}\n` +
+      `배치한 타일: ${state.tiles.size}개\n` +
+      `https://roman-puzzle.vercel.app`;
+
+    try {
+      await navigator.clipboard.writeText(result);
+      this.showMessage('결과 복사됨!');
+    } catch (e) {
+      console.error('복사 실패:', e);
+    }
   }
 
   private renderStatus(state: GameState): void {
@@ -149,7 +193,7 @@ export class GameRenderer {
         <span class="status-label">Quest</span>
         <span class="status-value">${questDisplay}</span>
       </div>
-      ${status.isGameOver ? '<div class="game-over">Game Over! No valid moves available.</div>' : ''}
+      ${status.isGameOver ? `<div class="game-over">Game Over! Level ${status.level} 달성! <button class="copy-result-btn">결과 복사</button></div>` : ''}
     `;
   }
 
@@ -286,5 +330,18 @@ export class GameRenderer {
     setTimeout(() => {
       tileText.remove();
     }, 800);
+  }
+
+  // 메시지 표시
+  showMessage(message: string): void {
+    const msgEl = document.createElement('div');
+    msgEl.className = 'message-text';
+    msgEl.textContent = message;
+
+    this.levelUpContainer.appendChild(msgEl);
+
+    setTimeout(() => {
+      msgEl.remove();
+    }, 1000);
   }
 }

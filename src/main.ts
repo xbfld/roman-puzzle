@@ -20,6 +20,8 @@ class RomanPuzzleGame {
       onReset: () => this.handleReset(),
       onUndo: () => this.handleUndo(),
       onRedo: () => this.handleRedo(),
+      onSave: () => this.handleSave(),
+      onLoad: () => this.handleLoad(),
     });
 
     this.render();
@@ -101,6 +103,61 @@ class RomanPuzzleGame {
     this.state = nextState;
     this.previousLevel = this.state.level;
     this.render();
+  }
+
+  private serializeState(state: GameState): object {
+    return {
+      ...state,
+      tiles: Array.from(state.tiles.entries()),
+    };
+  }
+
+  private deserializeState(data: any): GameState {
+    return {
+      ...data,
+      tiles: new Map(data.tiles),
+      playerPosition: { ...data.playerPosition },
+    };
+  }
+
+  private async handleSave(): Promise<void> {
+    const saveData = {
+      version: 1,
+      state: this.serializeState(this.state),
+      history: this.history.map(s => this.serializeState(s)),
+      redoStack: this.redoStack.map(s => this.serializeState(s)),
+    };
+
+    const json = JSON.stringify(saveData);
+
+    try {
+      await navigator.clipboard.writeText(json);
+      this.renderer.showMessage('저장됨!');
+    } catch (e) {
+      console.error('클립보드 복사 실패:', e);
+      this.renderer.showMessage('저장 실패');
+    }
+  }
+
+  private async handleLoad(): Promise<void> {
+    try {
+      const json = await navigator.clipboard.readText();
+      const saveData = JSON.parse(json);
+
+      if (saveData.version !== 1) {
+        throw new Error('지원하지 않는 버전');
+      }
+
+      this.state = this.deserializeState(saveData.state);
+      this.history = saveData.history.map((s: any) => this.deserializeState(s));
+      this.redoStack = saveData.redoStack.map((s: any) => this.deserializeState(s));
+      this.previousLevel = this.state.level;
+      this.render();
+      this.renderer.showMessage('불러옴!');
+    } catch (e) {
+      console.error('불러오기 실패:', e);
+      this.renderer.showMessage('불러오기 실패');
+    }
   }
 
   private handlePlaceTile(position: Position, tile: RomanChar): void {
