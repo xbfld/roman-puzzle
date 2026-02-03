@@ -8,11 +8,13 @@ export declare class GameRenderer {
     private onMove;
     private onReset;
     private onUndo;
+    private onRedo;
     constructor(containerId: string, callbacks: {
         onMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
         onPlaceTile: (position: Position, tile: RomanChar) => void;
         onReset: () => void;
         onUndo: () => void;
+        onRedo: () => void;
     });
     private setupKeyboardControls;
     render(state: GameState, moveDirection?: 'up' | 'down' | 'left' | 'right'): void;

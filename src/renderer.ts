@@ -11,6 +11,7 @@ export class GameRenderer {
   private onMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
   private onReset: () => void;
   private onUndo: () => void;
+  private onRedo: () => void;
 
   constructor(
     containerId: string,
@@ -19,6 +20,7 @@ export class GameRenderer {
       onPlaceTile: (position: Position, tile: RomanChar) => void;
       onReset: () => void;
       onUndo: () => void;
+      onRedo: () => void;
     }
   ) {
     const container = document.getElementById(containerId);
@@ -30,6 +32,7 @@ export class GameRenderer {
     this.onMove = callbacks.onMove;
     this.onReset = callbacks.onReset;
     this.onUndo = callbacks.onUndo;
+    this.onRedo = callbacks.onRedo;
 
     // 컨테이너 구조 생성
     this.container.innerHTML = `
@@ -44,10 +47,11 @@ export class GameRenderer {
       <div class="game-footer">
         <div class="controls-info">
           <p><strong>Move:</strong> Arrow keys, WASD, or click</p>
-          <p><strong>Undo:</strong> Z or Ctrl+Z</p>
+          <p><strong>Undo/Redo:</strong> Z / Y</p>
         </div>
         <div class="button-group">
           <button class="undo-button">Undo</button>
+          <button class="redo-button">Redo</button>
           <button class="reset-button">Reset</button>
         </div>
       </div>
@@ -64,16 +68,26 @@ export class GameRenderer {
     const undoButton = this.container.querySelector('.undo-button')!;
     undoButton.addEventListener('click', () => this.onUndo());
 
+    const redoButton = this.container.querySelector('.redo-button')!;
+    redoButton.addEventListener('click', () => this.onRedo());
+
     // 키보드 이벤트
     this.setupKeyboardControls();
   }
 
   private setupKeyboardControls(): void {
     document.addEventListener('keydown', (e) => {
-      // Undo: Z 또는 Ctrl+Z
+      // Undo: Z
       if (e.key === 'z' || e.key === 'Z') {
         e.preventDefault();
         this.onUndo();
+        return;
+      }
+
+      // Redo: Y
+      if (e.key === 'y' || e.key === 'Y') {
+        e.preventDefault();
+        this.onRedo();
         return;
       }
 

@@ -3,6 +3,7 @@ import { GameRenderer } from './renderer.js';
 class RomanPuzzleGame {
     constructor(containerId, viewportSize = 11) {
         this.history = []; // Undo 히스토리
+        this.redoStack = []; // Redo 스택
         this.maxHistorySize = 100; // 최대 히스토리 크기
         this.state = createInitialState(viewportSize);
         this.previousLevel = this.state.level;
@@ -11,6 +12,7 @@ class RomanPuzzleGame {
             onPlaceTile: (position, tile) => this.handlePlaceTile(position, tile),
             onReset: () => this.handleReset(),
             onUndo: () => this.handleUndo(),
+            onRedo: () => this.handleRedo(),
         });
         this.render();
     }
@@ -19,6 +21,8 @@ class RomanPuzzleGame {
         if (result.state !== this.state) {
             // 이동 전 상태를 히스토리에 저장
             this.saveToHistory(this.state);
+            // 새로운 이동 시 redo 스택 초기화
+            this.redoStack = [];
             this.state = result.state;
             this.render(direction); // 이동 방향 전달
             // 타일 자동 배치 표시
@@ -49,8 +53,29 @@ class RomanPuzzleGame {
         if (this.history.length === 0) {
             return; // 되돌릴 상태 없음
         }
+        // 현재 상태를 redo 스택에 저장
+        this.saveToRedoStack(this.state);
         const previousState = this.history.pop();
         this.state = previousState;
+        this.previousLevel = this.state.level;
+        this.render();
+    }
+    saveToRedoStack(state) {
+        const stateCopy = {
+            ...state,
+            tiles: new Map(state.tiles),
+            playerPosition: { ...state.playerPosition },
+        };
+        this.redoStack.push(stateCopy);
+    }
+    handleRedo() {
+        if (this.redoStack.length === 0) {
+            return; // 다시 실행할 상태 없음
+        }
+        // 현재 상태를 히스토리에 저장
+        this.saveToHistory(this.state);
+        const nextState = this.redoStack.pop();
+        this.state = nextState;
         this.previousLevel = this.state.level;
         this.render();
     }
