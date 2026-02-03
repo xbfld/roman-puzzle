@@ -109,6 +109,15 @@ const LevelBadge = styled.span`
   border-radius: 2px;
 `
 
+const PlayerIndicator = styled.div`
+  position: absolute;
+  inset: 2px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(0,0,0,0.3), inset 0 0 8px rgba(139, 69, 19, 0.3);
+  pointer-events: none;
+`
+
 const GridCellComponent = ({
   tile,
   isPlayer,
@@ -117,8 +126,8 @@ const GridCellComponent = ({
   currentLevel,
   onClick,
 }: GridCellProps) => {
-  const isShelter = !tile && !isPlayer
-  const isRoman = !!tile && !isPlayer
+  const isShelter = !tile
+  const isRoman = !!tile
   const isOldTile = tile ? tile.level < currentLevel : false
 
   return (
@@ -126,19 +135,20 @@ const GridCellComponent = ({
       $isPlayer={isPlayer}
       $isValidMove={isValidMove}
       $isDark={isDark}
-      $isShelter={isShelter}
-      $isRoman={isRoman}
+      $isShelter={isShelter && !isPlayer}
+      $isRoman={isRoman && !isPlayer}
       $isOldTile={isOldTile}
       onClick={isValidMove ? onClick : undefined}
     >
-      {isPlayer ? (
-        <CellContent $isPlayer={true} $isOldTile={false}>●</CellContent>
-      ) : tile ? (
+      {tile ? (
         <>
-          <CellContent $isPlayer={false} $isOldTile={isOldTile} $char={tile.char}>{tile.char}</CellContent>
-          {isOldTile && <LevelBadge>Lv{tile.level}</LevelBadge>}
+          <CellContent $isPlayer={isPlayer} $isOldTile={isOldTile && !isPlayer} $char={tile.char}>{tile.char}</CellContent>
+          {isOldTile && !isPlayer && <LevelBadge>Lv{tile.level}</LevelBadge>}
         </>
+      ) : isPlayer ? (
+        <CellContent $isPlayer={true} $isOldTile={false}>◇</CellContent>
       ) : null}
+      {isPlayer && <PlayerIndicator />}
     </CellContainer>
   )
 }
