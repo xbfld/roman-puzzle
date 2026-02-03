@@ -18,7 +18,7 @@ export class GameRenderer {
         // 컨테이너 구조 생성
         this.container.innerHTML = `
       <div class="game-header">
-        <h1>Roman Puzzle</h1>
+        <h1>3999</h1>
         <div class="status-container"></div>
       </div>
       <div class="grid-wrapper">
@@ -117,10 +117,10 @@ export class GameRenderer {
     }
     async copyResult(state) {
         const status = getGameStatus(state);
-        const result = `🏛️ Roman Puzzle 결과\n` +
+        const result = `🏛️ 3999 결과\n` +
             `레벨: ${status.level}\n` +
             `배치한 타일: ${state.tiles.size}개\n` +
-            `https://roman-puzzle.vercel.app`;
+            `https://3999.vercel.app`;
         try {
             await navigator.clipboard.writeText(result);
             this.showMessage('결과 복사됨!');
