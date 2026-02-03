@@ -481,6 +481,120 @@
       text-decoration: underline;
     }
 
+    /* 도움말 모달 */
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .help-button {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #d4c8b8;
+      background: #f8f4ef;
+      color: #8b4513;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .help-button:hover {
+      background: #8b4513;
+      color: #fff;
+      border-color: #8b4513;
+    }
+
+    .help-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .help-modal.hidden {
+      display: none;
+    }
+
+    .help-content {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 400px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .help-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      transition: all 0.2s ease;
+    }
+
+    .help-close:hover {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .help-content h2 {
+      color: #8b4513;
+      margin-bottom: 16px;
+      font-size: 1.3rem;
+    }
+
+    .help-body {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #444;
+    }
+
+    .help-body p {
+      margin-bottom: 12px;
+    }
+
+    .help-body hr {
+      border: none;
+      border-top: 1px solid #e0e0e0;
+      margin: 16px 0;
+    }
+
+    .help-body strong {
+      color: #333;
+    }
+
+    .help-body .roman {
+      background: #fff8e1;
+      color: #8b4513;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
     /* 데스크톱/모바일 표시 제어 */
     .mobile-only {
       display: none;
