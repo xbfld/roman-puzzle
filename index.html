@@ -519,52 +519,53 @@
 
     /* 세이브 슬롯 */
     .save-slot-container {
-      margin-bottom: 15px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .save-slot-group {
-      padding: 8px 12px;
+      margin-bottom: 10px;
+      padding: 8px;
       background: #f8f4ef;
       border-radius: 8px;
       border: 1px solid #e8e0d5;
     }
 
-    .save-slot-group.auto-slots {
-      background: #f0f4f8;
-      border-color: #d0dce8;
+    .save-slot-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+    }
+
+    .save-slot-group + .save-slot-group {
+      border-top: 1px solid #e8e0d5;
+      padding-top: 8px;
+      margin-top: 4px;
     }
 
     .save-slot-label {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: #888;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 6px;
-      text-align: center;
+      letter-spacing: 0.5px;
+      min-width: 45px;
+      text-align: right;
     }
 
     .save-slots {
       display: flex;
-      gap: 6px;
-      justify-content: center;
+      gap: 4px;
+      flex: 1;
     }
 
     .save-slot {
       position: relative;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      padding: 6px 10px;
+      gap: 4px;
+      padding: 4px 8px;
       background: #fff;
-      border: 2px solid #ddd;
-      border-radius: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
       cursor: pointer;
       transition: all 0.15s ease;
-      min-width: 42px;
+      font-size: 0.7rem;
     }
 
     .save-slot:hover {
@@ -582,28 +583,24 @@
     }
 
     .save-slot.active {
-      border-color: #ff9800;
-      box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+      border-color: #ff9800 !important;
+      background: #fff8e1 !important;
     }
 
     /* 자동저장 슬롯 스타일 */
     .auto-slot {
-      border-color: #90a4ae;
-      background: #f5f7f9;
-    }
-
-    .auto-slot:hover {
-      border-color: #607d8b;
+      border-color: #b0bec5;
       background: #eceff1;
     }
 
-    .auto-slot.has-data {
-      border-color: #42a5f5;
-      background: #e3f2fd;
+    .auto-slot:hover {
+      border-color: #78909c;
+      background: #cfd8dc;
     }
 
-    .auto-slot.has-data:hover {
-      border-color: #1e88e5;
+    .auto-slot.has-data {
+      border-color: #64b5f6;
+      background: #e3f2fd;
     }
 
     .auto-slot.has-data .slot-info {
@@ -612,63 +609,41 @@
 
     /* 현재 슬롯 (▶) */
     .current-slot {
-      border-color: #ff9800;
-      background: #fff8e1;
-    }
-
-    .current-slot:hover {
-      border-color: #f57c00;
-      background: #fff3e0;
+      border-color: #ffb74d !important;
+      background: #fff8e1 !important;
     }
 
     .current-slot .slot-num {
-      color: #ff9800;
+      color: #f57c00;
     }
 
     .current-slot .slot-info {
-      color: #f57c00;
-      font-weight: bold;
+      color: #ef6c00;
     }
 
     .slot-num {
-      font-size: 0.8rem;
       font-weight: bold;
       color: #8b4513;
     }
 
     .auto-slot .slot-num {
       color: #607d8b;
-      font-size: 0.7rem;
     }
 
     .slot-info {
-      font-size: 0.6rem;
-      color: #888;
-      margin-top: 1px;
+      color: #999;
     }
 
     .save-slot.has-data .slot-info {
-      color: #4caf50;
-      font-weight: bold;
+      color: #388e3c;
+      font-weight: 500;
     }
 
-    /* 슬롯 액션 버튼 */
+    /* 슬롯 액션 버튼 - 인라인 표시 */
     .slot-actions {
-      position: absolute;
-      top: 100%;
-      left: 50%;
-      transform: translateX(-50%);
       display: flex;
-      flex-direction: column;
       gap: 2px;
-      background: #fff;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 4px;
-      margin-top: 4px;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      white-space: nowrap;
+      margin-left: 4px;
     }
 
     .slot-actions.hidden {
@@ -676,12 +651,12 @@
     }
 
     .slot-action {
-      padding: 4px 8px;
-      font-size: 0.65rem;
+      padding: 2px 6px;
+      font-size: 0.6rem;
       border: none;
       border-radius: 3px;
       cursor: pointer;
-      transition: background 0.15s ease;
+      transition: all 0.15s ease;
     }
 
     .load-action {

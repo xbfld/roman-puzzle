@@ -102,67 +102,40 @@ export class GameRenderer {
       </div>
       <div class="save-slot-container">
         <div class="save-slot-group auto-slots">
-          <div class="save-slot-label">자동저장</div>
+          <div class="save-slot-label">Auto</div>
           <div class="save-slots">
             <button class="save-slot auto-slot current-slot" data-slot="-1" data-type="auto">
-              <span class="slot-num">▶</span>
-              <span class="slot-info">현재</span>
-              <div class="slot-actions hidden">
-                <button class="slot-action load-action">불러오기</button>
-              </div>
+              <span class="slot-num">▶</span><span class="slot-info">현재</span>
+              <div class="slot-actions hidden"><button class="slot-action load-action">Load</button></div>
             </button>
             <button class="save-slot auto-slot" data-slot="0" data-type="auto">
-              <span class="slot-num">A1</span>
-              <span class="slot-info">빈 슬롯</span>
-              <div class="slot-actions hidden">
-                <button class="slot-action load-action">불러오기</button>
-                <button class="slot-action delete-action">삭제</button>
-              </div>
+              <span class="slot-num">1</span><span class="slot-info">-</span>
+              <div class="slot-actions hidden"><button class="slot-action load-action">Load</button><button class="slot-action delete-action">Del</button></div>
             </button>
             <button class="save-slot auto-slot" data-slot="1" data-type="auto">
-              <span class="slot-num">A2</span>
-              <span class="slot-info">빈 슬롯</span>
-              <div class="slot-actions hidden">
-                <button class="slot-action load-action">불러오기</button>
-                <button class="slot-action delete-action">삭제</button>
-              </div>
+              <span class="slot-num">2</span><span class="slot-info">-</span>
+              <div class="slot-actions hidden"><button class="slot-action load-action">Load</button><button class="slot-action delete-action">Del</button></div>
             </button>
             <button class="save-slot auto-slot" data-slot="2" data-type="auto">
-              <span class="slot-num">A3</span>
-              <span class="slot-info">빈 슬롯</span>
-              <div class="slot-actions hidden">
-                <button class="slot-action load-action">불러오기</button>
-                <button class="slot-action delete-action">삭제</button>
-              </div>
+              <span class="slot-num">3</span><span class="slot-info">-</span>
+              <div class="slot-actions hidden"><button class="slot-action load-action">Load</button><button class="slot-action delete-action">Del</button></div>
             </button>
           </div>
         </div>
         <div class="save-slot-group manual-slots">
-          <div class="save-slot-label">수동저장</div>
+          <div class="save-slot-label">Manual</div>
           <div class="save-slots">
             <button class="save-slot manual-slot" data-slot="0" data-type="manual">
-              <span class="slot-num">1</span>
-              <span class="slot-info">빈 슬롯</span>
-              <div class="slot-actions hidden">
-                <button class="slot-action load-action">불러오기</button>
-                <button class="slot-action delete-action">삭제</button>
-              </div>
+              <span class="slot-num">1</span><span class="slot-info">-</span>
+              <div class="slot-actions hidden"><button class="slot-action load-action">Load</button><button class="slot-action delete-action">Del</button></div>
             </button>
             <button class="save-slot manual-slot" data-slot="1" data-type="manual">
-              <span class="slot-num">2</span>
-              <span class="slot-info">빈 슬롯</span>
-              <div class="slot-actions hidden">
-                <button class="slot-action load-action">불러오기</button>
-                <button class="slot-action delete-action">삭제</button>
-              </div>
+              <span class="slot-num">2</span><span class="slot-info">-</span>
+              <div class="slot-actions hidden"><button class="slot-action load-action">Load</button><button class="slot-action delete-action">Del</button></div>
             </button>
             <button class="save-slot manual-slot" data-slot="2" data-type="manual">
-              <span class="slot-num">3</span>
-              <span class="slot-info">빈 슬롯</span>
-              <div class="slot-actions hidden">
-                <button class="slot-action load-action">불러오기</button>
-                <button class="slot-action delete-action">삭제</button>
-              </div>
+              <span class="slot-num">3</span><span class="slot-info">-</span>
+              <div class="slot-actions hidden"><button class="slot-action load-action">Load</button><button class="slot-action delete-action">Del</button></div>
             </button>
           </div>
         </div>
@@ -725,10 +698,10 @@ export class GameRenderer {
 
       const slot = autoSlots[i];
       if (slot) {
-        infoEl.textContent = `Lv.${slot.level}`;
+        infoEl.textContent = `Lv${slot.level}`;
         btn.classList.add('has-data');
       } else {
-        infoEl.textContent = '빈 슬롯';
+        infoEl.textContent = '-';
         btn.classList.remove('has-data');
       }
     });
@@ -741,10 +714,10 @@ export class GameRenderer {
 
       const slot = manualSlots[i];
       if (slot) {
-        infoEl.textContent = `Lv.${slot.level}`;
+        infoEl.textContent = `Lv${slot.level}`;
         btn.classList.add('has-data');
       } else {
-        infoEl.textContent = '빈 슬롯';
+        infoEl.textContent = '-';
         btn.classList.remove('has-data');
       }
     });
