@@ -1,5 +1,5 @@
 import { GameState, Position, RomanChar, posToKey } from './types.js';
-import { getValidMoves, getGameStatus, getTileAt } from './game.js';
+import { getValidMoves, getGameStatus, getTileAt, getPlacedTileAt } from './game.js';
 
 export class GameRenderer {
   private container: HTMLElement;
@@ -337,6 +337,16 @@ export class GameRenderer {
           }
         } else {
           cell.classList.add('cell-roman');
+          const placedTile = getPlacedTileAt(state, pos);
+
+          // 레벨 뱃지
+          if (placedTile) {
+            const tileLevelBadge = document.createElement('div');
+            tileLevelBadge.className = 'tile-level-badge';
+            tileLevelBadge.textContent = `${placedTile.level}`;
+            cell.appendChild(tileLevelBadge);
+          }
+
           const tileText = document.createElement('span');
           tileText.className = 'tile-text';
           tileText.textContent = tile;

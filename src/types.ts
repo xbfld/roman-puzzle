@@ -4,6 +4,12 @@ export type RomanChar = 'I' | 'V' | 'X' | 'L' | 'C' | 'D' | 'M';
 // 타일 타입: null = 쉼터(빈칸), RomanChar = 로마숫자 타일
 export type TileType = RomanChar | null;
 
+// 배치된 타일 정보 (문자 + 배치 레벨)
+export interface PlacedTile {
+  char: RomanChar;
+  level: number;
+}
+
 // 위치 인터페이스 (무한 격자용 - 음수 좌표 가능)
 export interface Position {
   x: number;
@@ -12,8 +18,8 @@ export interface Position {
 
 // 게임 상태 인터페이스
 export interface GameState {
-  // 무한 격자: Map으로 타일 저장 (key: "x,y", value: TileType)
-  tiles: Map<string, RomanChar>;
+  // 무한 격자: Map으로 타일 저장 (key: "x,y", value: PlacedTile)
+  tiles: Map<string, PlacedTile>;
   playerPosition: Position;
   level: number;
   tileItems: number;

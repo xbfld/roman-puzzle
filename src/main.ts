@@ -113,9 +113,19 @@ class RomanPuzzleGame {
   }
 
   private deserializeState(data: any): GameState {
+    // 기존 저장 데이터 호환 (RomanChar만 있던 경우 → PlacedTile로 변환)
+    const tiles = new Map(data.tiles.map(([key, value]: [string, any]) => {
+      if (typeof value === 'string') {
+        // 이전 버전: RomanChar만 저장됨 → 레벨 1로 간주
+        return [key, { char: value, level: 1 }];
+      }
+      // 새 버전: PlacedTile 객체
+      return [key, value];
+    }));
+
     return {
       ...data,
-      tiles: new Map(data.tiles),
+      tiles,
       playerPosition: { ...data.playerPosition },
     };
   }

@@ -30,6 +30,11 @@ export function getCurrentRequiredChar(state) {
 }
 // 특정 위치의 타일 가져오기 (없으면 null = 쉼터)
 export function getTileAt(state, pos) {
+    const tile = state.tiles.get(posToKey(pos));
+    return tile ? tile.char : null;
+}
+// 특정 위치의 타일 전체 정보 가져오기 (레벨 포함)
+export function getPlacedTileAt(state, pos) {
     return state.tiles.get(posToKey(pos)) ?? null;
 }
 // 방향으로 새 위치 계산
@@ -117,7 +122,7 @@ export function move(state, direction) {
     // 쉼터에서 쉼터로 이동 시 자동 타일 배치 (퀘스트 시작)
     if (targetTile === null && !state.isOnQuest && state.tileItems > 0) {
         const firstChar = state.currentQuest[0];
-        newTiles.set(posToKey(newPos), firstChar);
+        newTiles.set(posToKey(newPos), { char: firstChar, level: state.level });
         newState.tileItems = state.tileItems - 1;
         autoPlacedTile = firstChar;
         newState.isOnQuest = true;
@@ -126,7 +131,7 @@ export function move(state, direction) {
     // 퀘스트 중 빈칸으로 이동 시 자동 타일 배치
     else if (targetTile === null && state.isOnQuest && requiredChar !== null && state.tileItems > 0) {
         // 자동으로 필요한 타일 배치
-        newTiles.set(posToKey(newPos), requiredChar);
+        newTiles.set(posToKey(newPos), { char: requiredChar, level: state.level });
         newState.tileItems = state.tileItems - 1;
         autoPlacedTile = requiredChar;
         // 진행도 업데이트
@@ -174,7 +179,7 @@ export function placeTile(state, position, tile) {
     }
     // 새 격자 생성 및 타일 배치
     const newTiles = new Map(state.tiles);
-    newTiles.set(posToKey(position), tile);
+    newTiles.set(posToKey(position), { char: tile, level: state.level });
     return {
         ...state,
         tiles: newTiles,
