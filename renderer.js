@@ -3,6 +3,7 @@ import { getValidMoves, getGameStatus, getTileAt } from './game.js';
 export class GameRenderer {
     constructor(containerId, callbacks) {
         this.lastMoveDirection = null;
+        this.currentState = null;
         const container = document.getElementById(containerId);
         if (!container) {
             throw new Error(`Container with id "${containerId}" not found`);
@@ -12,6 +13,8 @@ export class GameRenderer {
         this.onReset = callbacks.onReset;
         this.onUndo = callbacks.onUndo;
         this.onRedo = callbacks.onRedo;
+        this.onSave = callbacks.onSave;
+        this.onLoad = callbacks.onLoad;
         // 컨테이너 구조 생성
         this.container.innerHTML = `
       <div class="game-header">
@@ -24,8 +27,9 @@ export class GameRenderer {
       </div>
       <div class="game-footer">
         <div class="controls-info">
-          <p><strong>Move:</strong> Arrow keys, WASD, or click</p>
+          <p><strong>Move:</strong> Arrow / WASD</p>
           <p><strong>Undo/Redo:</strong> Z / Y</p>
+          <p><strong>Save/Load:</strong> C / V</p>
         </div>
         <div class="button-group">
           <button class="undo-button">Undo</button>
@@ -61,6 +65,18 @@ export class GameRenderer {
                 this.onRedo();
                 return;
             }
+            // Save: C
+            if (e.key === 'c' || e.key === 'C') {
+                e.preventDefault();
+                this.onSave();
+                return;
+            }
+            // Load: V
+            if (e.key === 'v' || e.key === 'V') {
+                e.preventDefault();
+                this.onLoad();
+                return;
+            }
             switch (e.key) {
                 case 'ArrowUp':
                 case 'w':
@@ -90,8 +106,28 @@ export class GameRenderer {
         });
     }
     render(state, moveDirection) {
+        this.currentState = state;
         this.renderStatus(state);
         this.renderGrid(state, moveDirection);
+        // 결과 복사 버튼 이벤트
+        const copyBtn = this.statusContainer.querySelector('.copy-result-btn');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => this.copyResult(state));
+        }
+    }
+    async copyResult(state) {
+        const status = getGameStatus(state);
+        const result = `🏛️ Roman Puzzle 결과\n` +
+            `레벨: ${status.level}\n` +
+            `배치한 타일: ${state.tiles.size}개\n` +
+            `https://roman-puzzle.vercel.app`;
+        try {
+            await navigator.clipboard.writeText(result);
+            this.showMessage('결과 복사됨!');
+        }
+        catch (e) {
+            console.error('복사 실패:', e);
+        }
     }
     renderStatus(state) {
         const status = getGameStatus(state);
@@ -115,7 +151,7 @@ export class GameRenderer {
         <span class="status-label">Quest</span>
         <span class="status-value">${questDisplay}</span>
       </div>
-      ${status.isGameOver ? '<div class="game-over">Game Over! No valid moves available.</div>' : ''}
+      ${status.isGameOver ? `<div class="game-over">Game Over! Level ${status.level} 달성! <button class="copy-result-btn">결과 복사</button></div>` : ''}
     `;
     }
     getQuestProgressDisplay(quest, progress, isOnQuest) {
@@ -236,6 +272,16 @@ export class GameRenderer {
         setTimeout(() => {
             tileText.remove();
         }, 800);
+    }
+    // 메시지 표시
+    showMessage(message) {
+        const msgEl = document.createElement('div');
+        msgEl.className = 'message-text';
+        msgEl.textContent = message;
+        this.levelUpContainer.appendChild(msgEl);
+        setTimeout(() => {
+            msgEl.remove();
+        }, 1000);
     }
 }
 //# sourceMappingURL=renderer.js.map
