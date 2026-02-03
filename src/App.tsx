@@ -135,6 +135,61 @@ export default function App() {
     deleteSlot(slotId, type)
   }, [deleteSlot])
 
+  // Clipboard handlers
+  const handleCopyToClipboard = useCallback(async () => {
+    const dirMap: Record<string, string> = {
+      up: 'U', down: 'D', left: 'L', right: 'R',
+    }
+    const moves = timeline.moves.map(d => dirMap[d]).join('')
+    const data = {
+      version: 2,
+      viewportSize: timeline.viewportSize,
+      moves,
+      currentIndex: timeline.currentIndex,
+      level: state.level,
+    }
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(data))
+      useGameStore.setState({ message: '클립보드에 복사됨' })
+      setTimeout(() => useGameStore.setState({ message: null }), 1500)
+    } catch {
+      useGameStore.setState({ message: '복사 실패' })
+      setTimeout(() => useGameStore.setState({ message: null }), 1500)
+    }
+  }, [timeline, state.level])
+
+  const handlePasteFromClipboard = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      const data = JSON.parse(text)
+      if (data.version !== 2 || !data.moves) {
+        throw new Error('Invalid format')
+      }
+      const slot = {
+        id: -1,
+        type: 'auto' as const,
+        viewportSize: data.viewportSize,
+        moves: data.moves,
+        currentIndex: data.currentIndex,
+        level: data.level,
+        updatedAt: Date.now(),
+      }
+      const newTimeline = parseSlotToTimeline(slot)
+      const newState = getStateAtIndex(newTimeline, newTimeline.currentIndex)
+      useGameStore.setState({
+        timeline: newTimeline,
+        state: newState,
+        branchPoint: null,
+        stateCache: new Map(),
+      })
+      useGameStore.setState({ message: '클립보드에서 불러옴' })
+      setTimeout(() => useGameStore.setState({ message: null }), 1500)
+    } catch {
+      useGameStore.setState({ message: '불러오기 실패' })
+      setTimeout(() => useGameStore.setState({ message: null }), 1500)
+    }
+  }, [])
+
   // Keyboard controls
   useKeyboard({
     onMove: handleMove,
@@ -176,6 +231,8 @@ export default function App() {
         onRedo={handleRedo}
         onReset={handleReset}
         onHelpOpen={() => setHelpOpen(true)}
+        onCopyToClipboard={handleCopyToClipboard}
+        onPasteFromClipboard={handlePasteFromClipboard}
       />
 
       <HelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />

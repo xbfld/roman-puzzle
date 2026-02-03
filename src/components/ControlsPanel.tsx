@@ -6,6 +6,8 @@ interface ControlsPanelProps {
   onRedo: () => void
   onReset: () => void
   onHelpOpen: () => void
+  onCopyToClipboard: () => void
+  onPasteFromClipboard: () => void
 }
 
 const Container = styled.div`
@@ -50,7 +52,7 @@ const ButtonGroup = styled.div`
   gap: 6px;
 `
 
-const Button = styled.button<{ $variant?: 'help' | 'danger' }>`
+const Button = styled.button<{ $variant?: 'help' | 'danger' | 'clipboard' }>`
   padding: 8px 14px;
   border-radius: ${theme.sizes.borderRadiusSmall};
   font-size: 0.85rem;
@@ -88,6 +90,23 @@ const Button = styled.button<{ $variant?: 'help' | 'danger' }>`
         }
       `
     }
+    if (props.$variant === 'clipboard') {
+      return `
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #66bb6a 0%, #43a047 100%);
+        color: #fff;
+        font-size: 1rem;
+
+        &:hover {
+          background: linear-gradient(145deg, #81c784 0%, #66bb6a 100%);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(67, 160, 71, 0.4);
+        }
+      `
+    }
     return `
       background: linear-gradient(145deg, #a0522d 0%, ${theme.colors.primary} 100%);
       color: #fff;
@@ -100,7 +119,14 @@ const Button = styled.button<{ $variant?: 'help' | 'danger' }>`
   }}
 `
 
-export function ControlsPanel({ onUndo, onRedo, onReset, onHelpOpen }: ControlsPanelProps) {
+export function ControlsPanel({
+  onUndo,
+  onRedo,
+  onReset,
+  onHelpOpen,
+  onCopyToClipboard,
+  onPasteFromClipboard,
+}: ControlsPanelProps) {
   return (
     <Container>
       <ControlsInfo>
@@ -113,6 +139,8 @@ export function ControlsPanel({ onUndo, onRedo, onReset, onHelpOpen }: ControlsP
       </MobileInfo>
       <ButtonGroup>
         <Button $variant="help" onClick={onHelpOpen}>?</Button>
+        <Button $variant="clipboard" onClick={onCopyToClipboard} title="클립보드로 복사">📋</Button>
+        <Button $variant="clipboard" onClick={onPasteFromClipboard} title="클립보드에서 불러오기">📥</Button>
         <Button onClick={onUndo}>Undo</Button>
         <Button onClick={onRedo}>Redo</Button>
         <Button $variant="danger" onClick={onReset}>Reset</Button>
