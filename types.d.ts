@@ -25,9 +25,10 @@ export interface GameTimeline {
     currentIndex: number;
     levelUpIndices: number[];
 }
+export type SaveSlotType = 'auto' | 'manual';
 export interface SaveSlot {
     id: number;
-    name: string;
+    type: SaveSlotType;
     viewportSize: number;
     moves: string;
     currentIndex: number;
@@ -36,8 +37,9 @@ export interface SaveSlot {
 }
 export interface LocalSaveData {
     version: number;
-    slots: (SaveSlot | null)[];
-    lastSlot: number;
+    autoSlots: (SaveSlot | null)[];
+    manualSlots: (SaveSlot | null)[];
+    currentAutoSlot: SaveSlot | null;
 }
 export type GameEvent = {
     type: 'move';
