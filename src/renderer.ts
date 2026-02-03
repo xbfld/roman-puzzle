@@ -57,11 +57,11 @@ export class GameRenderer {
           <div class="help-body">
             <p><strong>목표:</strong> 로마숫자 퀘스트를 완료하며 최대한 높은 레벨 달성</p>
             <hr>
-            <p><strong>퀘스트:</strong> 현재 레벨의 로마숫자를 순서대로 밟기</p>
+            <p><strong>퀘스트:</strong> 로마숫자를 순서대로 밟고 쉼터(빈칸)로 돌아가기</p>
             <p>예: 레벨 4 = <span class="roman">IV</span> → I 밟고 → V 밟고 → 쉼터 도착</p>
             <hr>
             <p><strong>타일:</strong> 빈칸으로 이동하면 필요한 글자가 자동 배치됨 (아이템 1개 소모)</p>
-            <p><strong>레벨업:</strong> 퀘스트 완료 시 레벨업 + 타일 아이템 1개 획득</p>
+            <p><strong>레벨업:</strong> 쉼터 도착 시 레벨업 + 타일 아이템 1개 획득</p>
             <hr>
             <p><strong>팁:</strong> 타일을 효율적으로 재사용하세요!</p>
           </div>
