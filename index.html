@@ -465,8 +465,34 @@
       transform: translateY(0);
     }
 
+    /* 데스크톱/모바일 표시 제어 */
+    .mobile-only {
+      display: none;
+    }
+
+    .desktop-only {
+      display: block;
+    }
+
     /* 반응형 */
     @media (max-width: 500px) {
+      .mobile-only {
+        display: block;
+      }
+
+      .desktop-only {
+        display: none;
+      }
+
+      .button-group {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .undo-button, .redo-button, .reset-button {
+        padding: 12px 16px;
+        font-size: 1rem;
+      }
       #game-container {
         padding: 15px;
       }

@@ -52,10 +52,13 @@ export class GameRenderer {
         <div class="level-up-container"></div>
       </div>
       <div class="game-footer">
-        <div class="controls-info">
+        <div class="controls-info desktop-only">
           <p><strong>Move:</strong> Arrow / WASD</p>
           <p><strong>Undo/Redo:</strong> Z / Y</p>
           <p><strong>Save/Load:</strong> C / V</p>
+        </div>
+        <div class="controls-info mobile-only">
+          <p><strong>스와이프로 이동</strong></p>
         </div>
         <div class="button-group">
           <button class="undo-button">Undo</button>
@@ -81,6 +84,58 @@ export class GameRenderer {
 
     // 키보드 이벤트
     this.setupKeyboardControls();
+
+    // 터치 이벤트 (모바일)
+    this.setupTouchControls();
+  }
+
+  private setupTouchControls(): void {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+
+    const minSwipeDistance = 30;
+
+    this.gridContainer.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    this.gridContainer.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      this.handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY, minSwipeDistance);
+    }, { passive: true });
+  }
+
+  private handleSwipe(startX: number, startY: number, endX: number, endY: number, minDistance: number): void {
+    const diffX = endX - startX;
+    const diffY = endY - startY;
+
+    const absDiffX = Math.abs(diffX);
+    const absDiffY = Math.abs(diffY);
+
+    // 최소 스와이프 거리 체크
+    if (Math.max(absDiffX, absDiffY) < minDistance) {
+      return;
+    }
+
+    // 가로 스와이프가 더 큰 경우
+    if (absDiffX > absDiffY) {
+      if (diffX > 0) {
+        this.onMove('right');
+      } else {
+        this.onMove('left');
+      }
+    } else {
+      // 세로 스와이프가 더 큰 경우
+      if (diffY > 0) {
+        this.onMove('down');
+      } else {
+        this.onMove('up');
+      }
+    }
   }
 
   private setupKeyboardControls(): void {
