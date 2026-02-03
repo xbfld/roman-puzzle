@@ -507,10 +507,11 @@ export class GameRenderer {
             const slotEl = slot;
             const slotId = parseInt(slotEl.dataset.slot || '0', 10);
             const slotType = slotEl.dataset.type;
-            const hasData = slotEl.classList.contains('has-data');
             const isCurrentSlot = slotEl.classList.contains('current-slot');
             slotEl.addEventListener('click', (e) => {
                 const target = e.target;
+                // 동적으로 has-data 상태 확인
+                const hasData = slotEl.classList.contains('has-data');
                 // 액션 버튼 클릭 처리
                 if (target.classList.contains('load-action')) {
                     e.stopPropagation();
@@ -525,12 +526,12 @@ export class GameRenderer {
                     return;
                 }
                 // 수동 슬롯: 빈 슬롯 클릭 시 바로 저장
-                if (slotType === 'manual' && !slotEl.classList.contains('has-data')) {
+                if (slotType === 'manual' && !hasData) {
                     this.onSaveSlot(slotId, slotType);
                     return;
                 }
                 // 저장된 슬롯 클릭 시 액션 버튼 표시
-                if (slotEl.classList.contains('has-data') || isCurrentSlot) {
+                if (hasData || isCurrentSlot) {
                     this.toggleSlotActions(slotEl);
                 }
             });
