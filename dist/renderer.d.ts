@@ -22,7 +22,6 @@ export declare class GameRenderer {
         onLoad: () => void;
     });
     private setupTouchControls;
-    private handleSwipe;
     private setupKeyboardControls;
     render(state: GameState, moveDirection?: 'up' | 'down' | 'left' | 'right'): void;
     private copyResult;

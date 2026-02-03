@@ -58,7 +58,7 @@ export class GameRenderer {
           <p><strong>Save/Load:</strong> C / V</p>
         </div>
         <div class="controls-info mobile-only">
-          <p><strong>스와이프로 이동</strong></p>
+          <p><strong>터치로 이동</strong></p>
         </div>
         <div class="button-group">
           <button class="undo-button">Undo</button>
@@ -93,52 +93,37 @@ export class GameRenderer {
   }
 
   private setupTouchControls(): void {
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-
-    const minSwipeDistance = 30;
-
-    this.gridContainer.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    }, { passive: true });
-
     this.gridContainer.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      touchEndY = e.changedTouches[0].screenY;
-      this.handleSwipe(touchStartX, touchStartY, touchEndX, touchEndY, minSwipeDistance);
+      const touch = e.changedTouches[0];
+      const rect = this.gridContainer.getBoundingClientRect();
+
+      // 그리드 중심 좌표
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      // 터치 위치와 중심의 차이
+      const diffX = touch.clientX - centerX;
+      const diffY = touch.clientY - centerY;
+
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+
+      // 가로 방향이 더 큰 경우
+      if (absDiffX > absDiffY) {
+        if (diffX > 0) {
+          this.onMove('right');
+        } else {
+          this.onMove('left');
+        }
+      } else {
+        // 세로 방향이 더 큰 경우
+        if (diffY > 0) {
+          this.onMove('down');
+        } else {
+          this.onMove('up');
+        }
+      }
     }, { passive: true });
-  }
-
-  private handleSwipe(startX: number, startY: number, endX: number, endY: number, minDistance: number): void {
-    const diffX = endX - startX;
-    const diffY = endY - startY;
-
-    const absDiffX = Math.abs(diffX);
-    const absDiffY = Math.abs(diffY);
-
-    // 최소 스와이프 거리 체크
-    if (Math.max(absDiffX, absDiffY) < minDistance) {
-      return;
-    }
-
-    // 가로 스와이프가 더 큰 경우
-    if (absDiffX > absDiffY) {
-      if (diffX > 0) {
-        this.onMove('right');
-      } else {
-        this.onMove('left');
-      }
-    } else {
-      // 세로 스와이프가 더 큰 경우
-      if (diffY > 0) {
-        this.onMove('down');
-      } else {
-        this.onMove('up');
-      }
-    }
   }
 
   private setupKeyboardControls(): void {
