@@ -66,6 +66,9 @@ export class GameRenderer {
           <button class="reset-button">Reset</button>
         </div>
       </div>
+      <div class="credits">
+        Made by <a href="https://github.com/xbfld" target="_blank">@xbfld</a>
+      </div>
     `;
 
     this.statusContainer = this.container.querySelector('.status-container')!;
