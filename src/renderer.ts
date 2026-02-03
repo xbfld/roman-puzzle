@@ -1,4 +1,4 @@
-import { GameState, Position, RomanChar, posToKey, GameTimeline, SaveSlot } from './types.js';
+import { GameState, Position, RomanChar, posToKey, GameTimeline, SaveSlot, SaveSlotType } from './types.js';
 import { getValidMoves, getGameStatus, getTileAt, getPlacedTileAt } from './game.js';
 
 export class GameRenderer {
@@ -20,9 +20,11 @@ export class GameRenderer {
   private onSeek: (index: number) => void;
   private onSave: () => void;
   private onLoad: () => void;
-  private onSaveSlot: (slotId: number) => void;
-  private onLoadSlot: (slotId: number) => void;
+  private onSaveSlot: (slotId: number, type: SaveSlotType) => void;
+  private onLoadSlot: (slotId: number, type: SaveSlotType) => void;
+  private onDeleteSlot: (slotId: number, type: SaveSlotType) => void;
   private saveSlotContainer: HTMLElement | null = null;
+  private activeSlotTimeout: number | null = null;
 
   constructor(
     containerId: string,
@@ -37,8 +39,9 @@ export class GameRenderer {
       onSeek: (index: number) => void;
       onSave: () => void;
       onLoad: () => void;
-      onSaveSlot: (slotId: number) => void;
-      onLoadSlot: (slotId: number) => void;
+      onSaveSlot: (slotId: number, type: SaveSlotType) => void;
+      onLoadSlot: (slotId: number, type: SaveSlotType) => void;
+      onDeleteSlot: (slotId: number, type: SaveSlotType) => void;
     }
   ) {
     const container = document.getElementById(containerId);
@@ -58,6 +61,7 @@ export class GameRenderer {
     this.onLoad = callbacks.onLoad;
     this.onSaveSlot = callbacks.onSaveSlot;
     this.onLoadSlot = callbacks.onLoadSlot;
+    this.onDeleteSlot = callbacks.onDeleteSlot;
 
     // 컨테이너 구조 생성
     this.container.innerHTML = `
@@ -97,15 +101,71 @@ export class GameRenderer {
         </div>
       </div>
       <div class="save-slot-container">
-        <div class="save-slot-label">세이브 슬롯</div>
-        <div class="save-slots">
-          <button class="save-slot" data-slot="0"><span class="slot-num">1</span><span class="slot-info">빈 슬롯</span></button>
-          <button class="save-slot" data-slot="1"><span class="slot-num">2</span><span class="slot-info">빈 슬롯</span></button>
-          <button class="save-slot" data-slot="2"><span class="slot-num">3</span><span class="slot-info">빈 슬롯</span></button>
-          <button class="save-slot" data-slot="3"><span class="slot-num">4</span><span class="slot-info">빈 슬롯</span></button>
-          <button class="save-slot" data-slot="4"><span class="slot-num">5</span><span class="slot-info">빈 슬롯</span></button>
+        <div class="save-slot-group auto-slots">
+          <div class="save-slot-label">자동저장</div>
+          <div class="save-slots">
+            <button class="save-slot auto-slot current-slot" data-slot="-1" data-type="auto">
+              <span class="slot-num">▶</span>
+              <span class="slot-info">현재</span>
+              <div class="slot-actions hidden">
+                <button class="slot-action load-action">불러오기</button>
+              </div>
+            </button>
+            <button class="save-slot auto-slot" data-slot="0" data-type="auto">
+              <span class="slot-num">A1</span>
+              <span class="slot-info">빈 슬롯</span>
+              <div class="slot-actions hidden">
+                <button class="slot-action load-action">불러오기</button>
+                <button class="slot-action delete-action">삭제</button>
+              </div>
+            </button>
+            <button class="save-slot auto-slot" data-slot="1" data-type="auto">
+              <span class="slot-num">A2</span>
+              <span class="slot-info">빈 슬롯</span>
+              <div class="slot-actions hidden">
+                <button class="slot-action load-action">불러오기</button>
+                <button class="slot-action delete-action">삭제</button>
+              </div>
+            </button>
+            <button class="save-slot auto-slot" data-slot="2" data-type="auto">
+              <span class="slot-num">A3</span>
+              <span class="slot-info">빈 슬롯</span>
+              <div class="slot-actions hidden">
+                <button class="slot-action load-action">불러오기</button>
+                <button class="slot-action delete-action">삭제</button>
+              </div>
+            </button>
+          </div>
         </div>
-        <div class="save-slot-hint">클릭: 불러오기 / Shift+클릭: 저장</div>
+        <div class="save-slot-group manual-slots">
+          <div class="save-slot-label">수동저장</div>
+          <div class="save-slots">
+            <button class="save-slot manual-slot" data-slot="0" data-type="manual">
+              <span class="slot-num">1</span>
+              <span class="slot-info">빈 슬롯</span>
+              <div class="slot-actions hidden">
+                <button class="slot-action load-action">불러오기</button>
+                <button class="slot-action delete-action">삭제</button>
+              </div>
+            </button>
+            <button class="save-slot manual-slot" data-slot="1" data-type="manual">
+              <span class="slot-num">2</span>
+              <span class="slot-info">빈 슬롯</span>
+              <div class="slot-actions hidden">
+                <button class="slot-action load-action">불러오기</button>
+                <button class="slot-action delete-action">삭제</button>
+              </div>
+            </button>
+            <button class="save-slot manual-slot" data-slot="2" data-type="manual">
+              <span class="slot-num">3</span>
+              <span class="slot-info">빈 슬롯</span>
+              <div class="slot-actions hidden">
+                <button class="slot-action load-action">불러오기</button>
+                <button class="slot-action delete-action">삭제</button>
+              </div>
+            </button>
+          </div>
+        </div>
       </div>
       <div class="game-footer">
         <div class="controls-info desktop-only">
@@ -142,17 +202,7 @@ export class GameRenderer {
 
     // 세이브 슬롯 이벤트
     this.saveSlotContainer = this.container.querySelector('.save-slot-container')!;
-    const saveSlots = this.container.querySelectorAll('.save-slot');
-    saveSlots.forEach((slot) => {
-      slot.addEventListener('click', (e) => {
-        const slotId = parseInt((slot as HTMLElement).dataset.slot || '0', 10);
-        if ((e as MouseEvent).shiftKey) {
-          this.onSaveSlot(slotId);
-        } else {
-          this.onLoadSlot(slotId);
-        }
-      });
-    });
+    this.setupSaveSlotEvents();
 
     // 버튼 이벤트
     const resetButton = this.container.querySelector('.reset-button')!;
@@ -268,14 +318,14 @@ export class GameRenderer {
         return;
       }
 
-      // 슬롯 1-5: 숫자키 (Shift: 저장, 일반: 불러오기)
-      if (e.key >= '1' && e.key <= '5') {
+      // 슬롯 1-3: 숫자키 (Shift: 저장, 일반: 불러오기) - 수동 슬롯만
+      if (e.key >= '1' && e.key <= '3') {
         e.preventDefault();
         const slotId = parseInt(e.key, 10) - 1;
         if (e.shiftKey) {
-          this.onSaveSlot(slotId);
+          this.onSaveSlot(slotId, 'manual');
         } else {
-          this.onLoadSlot(slotId);
+          this.onLoadSlot(slotId, 'manual');
         }
         return;
       }
@@ -564,16 +614,132 @@ export class GameRenderer {
     }, 1000);
   }
 
-  // 세이브 슬롯 UI 업데이트
-  updateSaveSlots(slots: (SaveSlot | null)[]): void {
+  // 세이브 슬롯 이벤트 설정
+  private setupSaveSlotEvents(): void {
     if (!this.saveSlotContainer) return;
 
-    const slotButtons = this.saveSlotContainer.querySelectorAll('.save-slot');
-    slotButtons.forEach((btn, i) => {
+    const saveSlots = this.saveSlotContainer.querySelectorAll('.save-slot');
+    saveSlots.forEach((slot) => {
+      const slotEl = slot as HTMLElement;
+      const slotId = parseInt(slotEl.dataset.slot || '0', 10);
+      const slotType = slotEl.dataset.type as SaveSlotType;
+      const hasData = slotEl.classList.contains('has-data');
+      const isCurrentSlot = slotEl.classList.contains('current-slot');
+
+      slotEl.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+
+        // 액션 버튼 클릭 처리
+        if (target.classList.contains('load-action')) {
+          e.stopPropagation();
+          this.hideAllSlotActions();
+          this.onLoadSlot(slotId, slotType);
+          return;
+        }
+        if (target.classList.contains('delete-action')) {
+          e.stopPropagation();
+          this.hideAllSlotActions();
+          this.onDeleteSlot(slotId, slotType);
+          return;
+        }
+
+        // 수동 슬롯: 빈 슬롯 클릭 시 바로 저장
+        if (slotType === 'manual' && !slotEl.classList.contains('has-data')) {
+          this.onSaveSlot(slotId, slotType);
+          return;
+        }
+
+        // 저장된 슬롯 클릭 시 액션 버튼 표시
+        if (slotEl.classList.contains('has-data') || isCurrentSlot) {
+          this.toggleSlotActions(slotEl);
+        }
+      });
+    });
+
+    // 외부 클릭 시 액션 버튼 숨기기
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.save-slot')) {
+        this.hideAllSlotActions();
+      }
+    });
+  }
+
+  private toggleSlotActions(slotEl: HTMLElement): void {
+    const actionsEl = slotEl.querySelector('.slot-actions');
+    if (!actionsEl) return;
+
+    const isVisible = !actionsEl.classList.contains('hidden');
+
+    // 다른 슬롯의 액션 버튼 숨기기
+    this.hideAllSlotActions();
+
+    if (!isVisible) {
+      actionsEl.classList.remove('hidden');
+      slotEl.classList.add('active');
+
+      // 3초 후 자동 숨김
+      if (this.activeSlotTimeout) {
+        clearTimeout(this.activeSlotTimeout);
+      }
+      this.activeSlotTimeout = window.setTimeout(() => {
+        this.hideAllSlotActions();
+      }, 3000);
+    }
+  }
+
+  private hideAllSlotActions(): void {
+    if (!this.saveSlotContainer) return;
+
+    const allActions = this.saveSlotContainer.querySelectorAll('.slot-actions');
+    allActions.forEach((el) => el.classList.add('hidden'));
+
+    const allSlots = this.saveSlotContainer.querySelectorAll('.save-slot');
+    allSlots.forEach((el) => el.classList.remove('active'));
+
+    if (this.activeSlotTimeout) {
+      clearTimeout(this.activeSlotTimeout);
+      this.activeSlotTimeout = null;
+    }
+  }
+
+  // 세이브 슬롯 UI 업데이트
+  updateSaveSlots(autoSlots: (SaveSlot | null)[], manualSlots: (SaveSlot | null)[], currentSlot: SaveSlot | null): void {
+    if (!this.saveSlotContainer) return;
+
+    // 현재 슬롯 업데이트
+    const currentSlotEl = this.saveSlotContainer.querySelector('.current-slot');
+    if (currentSlotEl) {
+      const infoEl = currentSlotEl.querySelector('.slot-info');
+      if (infoEl && currentSlot) {
+        infoEl.textContent = `Lv.${currentSlot.level}`;
+        currentSlotEl.classList.add('has-data');
+      }
+    }
+
+    // 자동저장 슬롯 업데이트
+    const autoSlotEls = this.saveSlotContainer.querySelectorAll('.auto-slot:not(.current-slot)');
+    autoSlotEls.forEach((btn, i) => {
       const infoEl = btn.querySelector('.slot-info');
       if (!infoEl) return;
 
-      const slot = slots[i];
+      const slot = autoSlots[i];
+      if (slot) {
+        infoEl.textContent = `Lv.${slot.level}`;
+        btn.classList.add('has-data');
+      } else {
+        infoEl.textContent = '빈 슬롯';
+        btn.classList.remove('has-data');
+      }
+    });
+
+    // 수동저장 슬롯 업데이트
+    const manualSlotEls = this.saveSlotContainer.querySelectorAll('.manual-slot');
+    manualSlotEls.forEach((btn, i) => {
+      const infoEl = btn.querySelector('.slot-info');
+      if (!infoEl) return;
+
+      const slot = manualSlots[i];
       if (slot) {
         infoEl.textContent = `Lv.${slot.level}`;
         btn.classList.add('has-data');

@@ -520,38 +520,51 @@
     /* 세이브 슬롯 */
     .save-slot-container {
       margin-bottom: 15px;
-      padding: 10px 15px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .save-slot-group {
+      padding: 8px 12px;
       background: #f8f4ef;
       border-radius: 8px;
       border: 1px solid #e8e0d5;
     }
 
+    .save-slot-group.auto-slots {
+      background: #f0f4f8;
+      border-color: #d0dce8;
+    }
+
     .save-slot-label {
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       color: #888;
       text-transform: uppercase;
       letter-spacing: 1px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       text-align: center;
     }
 
     .save-slots {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       justify-content: center;
     }
 
     .save-slot {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 8px 12px;
+      padding: 6px 10px;
       background: #fff;
       border: 2px solid #ddd;
-      border-radius: 8px;
+      border-radius: 6px;
       cursor: pointer;
       transition: all 0.15s ease;
-      min-width: 50px;
+      min-width: 42px;
     }
 
     .save-slot:hover {
@@ -568,16 +581,70 @@
       border-color: #2e7d32;
     }
 
+    .save-slot.active {
+      border-color: #ff9800;
+      box-shadow: 0 0 8px rgba(255, 152, 0, 0.4);
+    }
+
+    /* 자동저장 슬롯 스타일 */
+    .auto-slot {
+      border-color: #90a4ae;
+      background: #f5f7f9;
+    }
+
+    .auto-slot:hover {
+      border-color: #607d8b;
+      background: #eceff1;
+    }
+
+    .auto-slot.has-data {
+      border-color: #42a5f5;
+      background: #e3f2fd;
+    }
+
+    .auto-slot.has-data:hover {
+      border-color: #1e88e5;
+    }
+
+    .auto-slot.has-data .slot-info {
+      color: #1976d2;
+    }
+
+    /* 현재 슬롯 (▶) */
+    .current-slot {
+      border-color: #ff9800;
+      background: #fff8e1;
+    }
+
+    .current-slot:hover {
+      border-color: #f57c00;
+      background: #fff3e0;
+    }
+
+    .current-slot .slot-num {
+      color: #ff9800;
+    }
+
+    .current-slot .slot-info {
+      color: #f57c00;
+      font-weight: bold;
+    }
+
     .slot-num {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: bold;
       color: #8b4513;
     }
 
+    .auto-slot .slot-num {
+      color: #607d8b;
+      font-size: 0.7rem;
+    }
+
     .slot-info {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: #888;
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .save-slot.has-data .slot-info {
@@ -585,11 +652,54 @@
       font-weight: bold;
     }
 
-    .save-slot-hint {
-      font-size: 0.7rem;
-      color: #999;
-      text-align: center;
-      margin-top: 8px;
+    /* 슬롯 액션 버튼 */
+    .slot-actions {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 4px;
+      margin-top: 4px;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      white-space: nowrap;
+    }
+
+    .slot-actions.hidden {
+      display: none;
+    }
+
+    .slot-action {
+      padding: 4px 8px;
+      font-size: 0.65rem;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .load-action {
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+
+    .load-action:hover {
+      background: #bbdefb;
+    }
+
+    .delete-action {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .delete-action:hover {
+      background: #ffcdd2;
     }
 
     .game-footer {

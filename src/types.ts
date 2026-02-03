@@ -41,10 +41,13 @@ export interface GameTimeline {
   levelUpIndices: number[];  // 레벨업 발생 시점 (move index)
 }
 
+// 세이브 슬롯 타입
+export type SaveSlotType = 'auto' | 'manual';
+
 // 세이브 슬롯
 export interface SaveSlot {
   id: number;
-  name: string;
+  type: SaveSlotType;
   viewportSize: number;
   moves: string;             // 압축된 이동 기록 (UDLR...)
   currentIndex: number;
@@ -55,8 +58,9 @@ export interface SaveSlot {
 // 로컬 저장 데이터
 export interface LocalSaveData {
   version: number;
-  slots: (SaveSlot | null)[];
-  lastSlot: number;          // 마지막으로 사용한 슬롯
+  autoSlots: (SaveSlot | null)[];   // 자동저장 슬롯 (세계선 분기 시 저장)
+  manualSlots: (SaveSlot | null)[]; // 수동저장 슬롯
+  currentAutoSlot: SaveSlot | null; // 현재 진행 상태 (항상 최신)
 }
 
 // 게임 이벤트 타입

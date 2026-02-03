@@ -1,4 +1,4 @@
-import { GameState, Position, RomanChar, GameTimeline, SaveSlot } from './types.js';
+import { GameState, Position, RomanChar, GameTimeline, SaveSlot, SaveSlotType } from './types.js';
 export declare class GameRenderer {
     private container;
     private statusContainer;
@@ -19,7 +19,9 @@ export declare class GameRenderer {
     private onLoad;
     private onSaveSlot;
     private onLoadSlot;
+    private onDeleteSlot;
     private saveSlotContainer;
+    private activeSlotTimeout;
     constructor(containerId: string, callbacks: {
         onMove: (direction: 'up' | 'down' | 'left' | 'right') => void;
         onPlaceTile: (position: Position, tile: RomanChar) => void;
@@ -31,8 +33,9 @@ export declare class GameRenderer {
         onSeek: (index: number) => void;
         onSave: () => void;
         onLoad: () => void;
-        onSaveSlot: (slotId: number) => void;
-        onLoadSlot: (slotId: number) => void;
+        onSaveSlot: (slotId: number, type: SaveSlotType) => void;
+        onLoadSlot: (slotId: number, type: SaveSlotType) => void;
+        onDeleteSlot: (slotId: number, type: SaveSlotType) => void;
     });
     private setupTouchControls;
     private setupKeyboardControls;
@@ -46,6 +49,9 @@ export declare class GameRenderer {
     showLevelUp(level: number): void;
     showAutoTilePlacement(tile: RomanChar): void;
     showMessage(message: string): void;
-    updateSaveSlots(slots: (SaveSlot | null)[]): void;
+    private setupSaveSlotEvents;
+    private toggleSlotActions;
+    private hideAllSlotActions;
+    updateSaveSlots(autoSlots: (SaveSlot | null)[], manualSlots: (SaveSlot | null)[], currentSlot: SaveSlot | null): void;
 }
 //# sourceMappingURL=renderer.d.ts.map
