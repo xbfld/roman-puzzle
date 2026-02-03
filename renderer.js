@@ -18,8 +18,28 @@ export class GameRenderer {
         // 컨테이너 구조 생성
         this.container.innerHTML = `
       <div class="game-header">
-        <h1>3999</h1>
+        <div class="title-row">
+          <h1>3999</h1>
+          <button class="help-button">?</button>
+        </div>
         <div class="status-container"></div>
+      </div>
+      <div class="help-modal hidden">
+        <div class="help-content">
+          <button class="help-close">&times;</button>
+          <h2>게임 방법</h2>
+          <div class="help-body">
+            <p><strong>목표:</strong> 로마숫자 퀘스트를 완료하며 최대한 높은 레벨 달성</p>
+            <hr>
+            <p><strong>퀘스트:</strong> 현재 레벨의 로마숫자를 순서대로 밟기</p>
+            <p>예: 레벨 4 = <span class="roman">IV</span> → I 밟고 → V 밟고 → 쉼터 도착</p>
+            <hr>
+            <p><strong>타일:</strong> 빈칸으로 이동하면 필요한 글자가 자동 배치됨 (아이템 1개 소모)</p>
+            <p><strong>레벨업:</strong> 퀘스트 완료 시 레벨업 + 타일 아이템 1개 획득</p>
+            <hr>
+            <p><strong>팁:</strong> 타일을 효율적으로 재사용하세요!</p>
+          </div>
+        </div>
       </div>
       <div class="grid-wrapper">
         <div class="grid-container"></div>
@@ -54,6 +74,21 @@ export class GameRenderer {
         undoButton.addEventListener('click', () => this.onUndo());
         const redoButton = this.container.querySelector('.redo-button');
         redoButton.addEventListener('click', () => this.onRedo());
+        // 도움말 모달
+        const helpButton = this.container.querySelector('.help-button');
+        const helpModal = this.container.querySelector('.help-modal');
+        const helpClose = this.container.querySelector('.help-close');
+        helpButton.addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+        helpClose.addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.add('hidden');
+            }
+        });
         // 키보드 이벤트
         this.setupKeyboardControls();
         // 터치 이벤트 (모바일)
