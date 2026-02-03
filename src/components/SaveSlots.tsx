@@ -25,7 +25,7 @@ const Container = styled.div`
 
 const SlotGroup = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
 `
 
@@ -41,7 +41,8 @@ const SlotLabel = styled.div`
 
 const Slots = styled.div`
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 3px;
   flex: 1;
 `
 
@@ -56,6 +57,7 @@ const SlotButton = styled.button<{
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
+  width: 100%;
   background: ${props => {
     if (props.$isCurrent) return theme.colors.warningLight
     if (props.$isAuto) return props.$hasData ? '#e3f2fd' : theme.colors.autoSlotBg

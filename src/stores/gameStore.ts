@@ -11,6 +11,7 @@ import {
   strongRedoTimeline,
   seekTimeline,
 } from '../lib/game'
+import { useSaveStore } from './saveStore'
 
 interface BranchPoint {
   timeline: GameTimeline
@@ -115,9 +116,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return
     }
 
-    // 세계선 분기 감지
+    // 세계선 분기 감지 - 이전 세계선을 자동저장 슬롯에 저장
     if (hasRedoHistory && branchPoint) {
-      // 분기 발생 - saveStore에서 처리
+      useSaveStore.getState().saveWorldlineToAutoSlot(
+        branchPoint.timeline,
+        branchPoint.state.level
+      )
       set({ branchPoint: null })
     }
 

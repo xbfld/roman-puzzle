@@ -44,8 +44,12 @@ const CellContainer = styled.div<{
 
   ${props => props.$isRoman && css`
     background: ${props.$isOldTile
-      ? 'linear-gradient(135deg, #e8e0d5 0%, #d8d0c5 100%)'
-      : `linear-gradient(135deg, ${theme.colors.roman} 0%, #ffe0b2 100%)`};
+      ? (props.$isDark
+        ? 'linear-gradient(135deg, #ddd5ca 0%, #cdc5ba 100%)'
+        : 'linear-gradient(135deg, #e8e0d5 0%, #d8d0c5 100%)')
+      : (props.$isDark
+        ? 'linear-gradient(135deg, #f5ecdc 0%, #f0d8a0 100%)'
+        : `linear-gradient(135deg, ${theme.colors.roman} 0%, #ffe0b2 100%)`)};
     border: 2px solid ${props.$isOldTile ? '#c0b8a8' : theme.colors.romanBorder};
   `}
 

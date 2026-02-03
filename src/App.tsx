@@ -70,8 +70,23 @@ export default function App() {
   // Initialize
   useEffect(() => {
     const viewportSize = calculateViewportSize()
-    initialize(viewportSize)
     loadFromStorage()
+
+    // currentAutoSlot이 있으면 자동 복원
+    const { currentAutoSlot } = useSaveStore.getState()
+    if (currentAutoSlot && currentAutoSlot.viewportSize === viewportSize) {
+      const savedTimeline = parseSlotToTimeline(currentAutoSlot)
+      const savedState = getStateAtIndex(savedTimeline, savedTimeline.currentIndex)
+
+      useGameStore.setState({
+        timeline: savedTimeline,
+        state: savedState,
+        branchPoint: null,
+        stateCache: new Map(),
+      })
+    } else {
+      initialize(viewportSize)
+    }
   }, [initialize, loadFromStorage])
 
   // Auto-save on state change
