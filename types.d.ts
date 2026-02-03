@@ -1,11 +1,15 @@
 export type RomanChar = 'I' | 'V' | 'X' | 'L' | 'C' | 'D' | 'M';
 export type TileType = RomanChar | null;
+export interface PlacedTile {
+    char: RomanChar;
+    level: number;
+}
 export interface Position {
     x: number;
     y: number;
 }
 export interface GameState {
-    tiles: Map<string, RomanChar>;
+    tiles: Map<string, PlacedTile>;
     playerPosition: Position;
     level: number;
     tileItems: number;
