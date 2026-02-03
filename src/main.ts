@@ -178,11 +178,42 @@ class RomanPuzzleGame {
   getState(): GameState {
     return this.state;
   }
+
+  // 뷰포트 크기 업데이트
+  updateViewportSize(newSize: number): void {
+    this.state = {
+      ...this.state,
+      viewportSize: newSize,
+    };
+    this.render();
+  }
+}
+
+// 화면 크기에 따라 뷰포트 크기 계산 (홀수 유지)
+function calculateViewportSize(): number {
+  const screenWidth = window.innerWidth;
+
+  if (screenWidth <= 400) {
+    return 7;  // 아주 작은 화면
+  } else if (screenWidth <= 500) {
+    return 9;  // 모바일
+  } else {
+    return 11; // 데스크톱
+  }
 }
 
 // 게임 초기화
 document.addEventListener('DOMContentLoaded', () => {
-  const game = new RomanPuzzleGame('game-container', 11);
+  const viewportSize = calculateViewportSize();
+  const game = new RomanPuzzleGame('game-container', viewportSize);
+
+  // 화면 크기 변경 시 뷰포트 재조정
+  window.addEventListener('resize', () => {
+    const newSize = calculateViewportSize();
+    if (newSize !== game.getState().viewportSize) {
+      game.updateViewportSize(newSize);
+    }
+  });
 
   // 디버그용 전역 접근
   (window as any).game = game;
