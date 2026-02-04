@@ -162,16 +162,22 @@ export default function App() {
     try {
       const text = await navigator.clipboard.readText()
       const data = JSON.parse(text)
-      if (data.version !== 2 || !data.moves) {
-        throw new Error('Invalid format')
-      }
+
+      // 유효성 검사
+      if (data.version !== 2) throw new Error('Invalid version')
+      if (typeof data.moves !== 'string') throw new Error('Invalid moves')
+      if (!/^[UDLR]*$/.test(data.moves)) throw new Error('Invalid move characters')
+      if (typeof data.viewportSize !== 'number' || data.viewportSize < 5) throw new Error('Invalid viewportSize')
+      if (typeof data.currentIndex !== 'number' || data.currentIndex < 0) throw new Error('Invalid currentIndex')
+      if (data.currentIndex > data.moves.length) throw new Error('currentIndex out of range')
+
       const slot = {
         id: -1,
         type: 'auto' as const,
         viewportSize: data.viewportSize,
         moves: data.moves,
         currentIndex: data.currentIndex,
-        level: data.level,
+        level: data.level || 1,
         updatedAt: Date.now(),
       }
       const newTimeline = parseSlotToTimeline(slot)
@@ -185,8 +191,8 @@ export default function App() {
       useGameStore.setState({ message: '클립보드에서 불러옴' })
       setTimeout(() => useGameStore.setState({ message: null }), 1500)
     } catch {
-      useGameStore.setState({ message: '불러오기 실패' })
-      setTimeout(() => useGameStore.setState({ message: null }), 1500)
+      useGameStore.setState({ message: '불러오기 실패: 잘못된 형식' })
+      setTimeout(() => useGameStore.setState({ message: null }), 2000)
     }
   }, [])
 
