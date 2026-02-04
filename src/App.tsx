@@ -13,7 +13,7 @@ import { useKeyboard } from './hooks/useKeyboard'
 import { useTouch } from './hooks/useTouch'
 import { theme } from './styles/theme'
 import { SaveSlotType } from './lib/types'
-import { getStateAtIndex } from './lib/game'
+import { getStateAtIndex, move as gameMove, createInitialState } from './lib/game'
 
 const Container = styled.div`
   display: flex;
@@ -181,6 +181,31 @@ export default function App() {
         updatedAt: Date.now(),
       }
       const newTimeline = parseSlotToTimeline(slot)
+
+      // moves가 실제로 수행 가능한지 검증
+      let testState = createInitialState(data.viewportSize)
+      let validMoveCount = 0
+      const moveDirMap: Record<string, 'up' | 'down' | 'left' | 'right'> = {
+        U: 'up', D: 'down', L: 'left', R: 'right',
+      }
+      for (const char of data.moves) {
+        const dir = moveDirMap[char]
+        const result = gameMove(testState, dir)
+        if (result.state !== testState) {
+          validMoveCount++
+          testState = result.state
+        }
+      }
+
+      // 유효한 이동 수가 moves 길이와 다르면 경고
+      if (validMoveCount !== data.moves.length) {
+        useGameStore.setState({ message: `주의: ${data.moves.length}수 중 ${validMoveCount}수만 유효` })
+        setTimeout(() => useGameStore.setState({ message: null }), 2500)
+      } else {
+        useGameStore.setState({ message: '클립보드에서 불러옴' })
+        setTimeout(() => useGameStore.setState({ message: null }), 1500)
+      }
+
       const newState = getStateAtIndex(newTimeline, newTimeline.currentIndex)
       useGameStore.setState({
         timeline: newTimeline,
@@ -188,7 +213,6 @@ export default function App() {
         branchPoint: null,
         stateCache: new Map(),
       })
-      useGameStore.setState({ message: '클립보드에서 불러옴' })
       setTimeout(() => useGameStore.setState({ message: null }), 1500)
     } catch {
       useGameStore.setState({ message: '불러오기 실패: 잘못된 형식' })
