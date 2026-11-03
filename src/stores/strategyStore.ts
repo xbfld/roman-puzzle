@@ -15,6 +15,7 @@ interface StrategyStore {
   syncActive: (timeline: GameTimeline) => void
   createBranch: (parentId: string, forkIndex: number, timeline: GameTimeline) => string
   addStrategy: (timeline: GameTimeline, name?: string, source?: Strategy['source']) => string
+  addRecommendation: (parentId: string, forkIndex: number, timeline: GameTimeline, name: string) => string
   selectStrategy: (id: string) => GameTimeline | null
   renameStrategy: (id: string, name: string) => void
   togglePin: (id: string) => void
@@ -94,6 +95,20 @@ export const useStrategyStore = create<StrategyStore>((set, get) => {
     addStrategy: (timeline, name, source) => {
       const strategy = createStrategy(timeline, uniqueName(name?.trim() || '새 전략'), source)
       set({ strategies: [...get().strategies, strategy], activeId: strategy.id })
+      persist()
+      return strategy.id
+    },
+    addRecommendation: (parentId, forkIndex, timeline, name) => {
+      const validated = validateStrategyTimeline(timeline)
+      const parent = get().strategies.find(strategy => strategy.id === parentId)
+      if (!parent) throw new Error('추천 경로의 시작 전략을 찾을 수 없습니다.')
+      const strategy = {
+        ...branchStrategy(parent, forkIndex, validated),
+        name: uniqueName(name),
+        source: 'algorithm' as const,
+      }
+      // A recommendation is a separate candidate, never an automatic move or switch.
+      set({ strategies: [...get().strategies, strategy] })
       persist()
       return strategy.id
     },

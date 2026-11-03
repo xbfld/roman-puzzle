@@ -156,3 +156,27 @@ test('invalid imports cannot poison persisted strategies or cursor restoration',
   assert.equal(useStrategyStore.getState().activeId, active)
 })
 
+
+test('recommendations preserve the active play cursor and original future as a separate algorithm branch', () => {
+  reset()
+  play('right', 'right', 'left', 'right', 'up')
+  useGameStore.getState().handleSeek(1)
+  const parentId = useStrategyStore.getState().activeId
+  const original = structuredClone(useGameStore.getState().timeline)
+  const id = useStrategyStore.getState().addRecommendation(parentId, 1, {
+    viewportSize: 7, moves: ['right', 'up'], currentIndex: 1, levelUpIndices: [0],
+  }, '추천 경로')
+  assert.equal(useStrategyStore.getState().activeId, parentId)
+  assert.deepEqual(useGameStore.getState().timeline, original)
+  const candidate = useStrategyStore.getState().strategies.find(strategy => strategy.id === id)
+  assert.equal(candidate.source, 'algorithm')
+  assert.equal(candidate.parentId, parentId)
+  assert.equal(candidate.forkIndex, 1)
+  assert.deepEqual(candidate.timeline.levelUpIndices, [0, 2])
+  assert.equal(candidate.timeline.currentIndex, 1)
+  useGameStore.getState().switchStrategy(id)
+  assert.equal(useGameStore.getState().timeline.currentIndex, 1)
+  useGameStore.getState().handleRedo()
+  assert.equal(useGameStore.getState().state.level, 2)
+  assert.deepEqual(useStrategyStore.getState().strategies.find(strategy => strategy.id === parentId).timeline.moves, original.moves)
+})

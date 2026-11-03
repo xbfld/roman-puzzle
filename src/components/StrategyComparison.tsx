@@ -9,6 +9,7 @@ import { GameGrid } from './GameGrid'
 interface StrategyComparisonProps {
   strategies: Strategy[]
   initialAId: string | null
+  initialBId?: string | null
   viewportSize: number
   onClose: () => void
   onContinue: (id: string) => void
@@ -148,9 +149,10 @@ function turnAt(timeline: GameTimeline, index: number) {
   return index - start
 }
 
-export function StrategyComparison({ strategies, initialAId, viewportSize, onClose, onContinue }: StrategyComparisonProps) {
+export function StrategyComparison({ strategies, initialAId, initialBId, viewportSize, onClose, onContinue }: StrategyComparisonProps) {
   const initialA = strategies.find(item => item.id === initialAId) ?? strategies[0]
-  const initialB = strategies.find(item => item.id !== initialA?.id)
+  const initialB = strategies.find(item => item.id === initialBId && item.id !== initialA?.id)
+    ?? strategies.find(item => item.id !== initialA?.id)
   const [aId, setAId] = useState(initialA?.id ?? '')
   const [bId, setBId] = useState(initialB?.id ?? '')
   const a = strategies.find(item => item.id === aId) ?? initialA

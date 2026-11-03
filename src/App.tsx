@@ -6,6 +6,7 @@ import { TimelineSlider } from './components/TimelineSlider'
 import { SaveSlots } from './components/SaveSlots'
 import { StrategyPanel } from './components/StrategyPanel'
 import { StrategyComparison } from './components/StrategyComparison'
+import { SolverPanel } from './components/SolverPanel'
 import { useStrategyStore } from './stores/strategyStore'
 import { ControlsPanel } from './components/ControlsPanel'
 import { HelpModal } from './components/HelpModal'
@@ -36,6 +37,26 @@ const LegacySaves = styled.details`
   p { margin-bottom: 12px; }
 `
 
+const RecommendationGuide = styled.section`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  margin-bottom: 12px;
+  color: ${theme.colors.primary};
+  font-size: 0.9rem;
+  button {
+    min-height: 48px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: ${theme.colors.primary};
+    color: #fff;
+    font-weight: 600;
+  }
+`
+
 const Credits = styled.div`
   margin-top: 28px;
   font-size: 0.75rem;
@@ -52,7 +73,9 @@ function calculateViewportSize(): number {
 export default function App() {
   const [helpOpen, setHelpOpen] = useState(false)
   const [comparing, setComparing] = useState(false)
+  const [comparisonPair, setComparisonPair] = useState<[string, string] | null>(null)
   const strategyStore = useStrategyStore()
+  const followingRecommendation = strategyStore.strategies.some(strategy => strategy.id === strategyStore.activeId && strategy.source === 'algorithm')
   const gridRef = useRef<HTMLDivElement>(null)
 
   // Game store
@@ -214,7 +237,8 @@ export default function App() {
       {comparing ? (
         <StrategyComparison
           strategies={strategyStore.strategies}
-          initialAId={strategyStore.activeId}
+          initialAId={comparisonPair?.[0] ?? strategyStore.activeId}
+          initialBId={comparisonPair?.[1]}
           viewportSize={state.viewportSize}
           onClose={() => setComparing(false)}
           onContinue={id => { switchStrategy(id); setComparing(false) }}
@@ -223,11 +247,29 @@ export default function App() {
         <>
           <GameHeader state={state} />
 
+          {followingRecommendation && <RecommendationGuide aria-label="추천 방향 안내">
+            {timeline.currentIndex < timeline.moves.length ? <>
+              <strong>다음 추천 방향: {{ up: '위', down: '아래', left: '왼쪽', right: '오른쪽' }[timeline.moves[timeline.currentIndex]]}</strong>
+              <button type="button" onClick={handleRedo}>추천 한 수 따라가기</button>
+            </> : <strong>추천 경로의 마지막 위치입니다.</strong>}
+          </RecommendationGuide>}
+
           <div ref={gridRef}>
             <GameGrid state={state} onMove={handleMove} />
           </div>
 
           <TimelineSlider timeline={timeline} onSeek={handleSeek} />
+
+          <SolverPanel
+            state={state}
+            timeline={timeline}
+            activeId={strategyStore.activeId}
+            onOpen={id => {
+              switchStrategy(id)
+              requestAnimationFrame(() => gridRef.current?.scrollIntoView({ block: 'center' }))
+            }}
+            onCompare={(parentId, candidateId) => { setComparisonPair([parentId, candidateId]); setComparing(true) }}
+          />
 
           <StrategyPanel
             strategies={strategyStore.strategies}
@@ -237,7 +279,7 @@ export default function App() {
             onRename={strategyStore.renameStrategy}
             onTogglePin={strategyStore.togglePin}
             onToggleCollapse={strategyStore.toggleCollapse}
-            onCompare={() => setComparing(true)}
+            onCompare={() => { setComparisonPair(null); setComparing(true) }}
           />
 
           <LegacySaves>
