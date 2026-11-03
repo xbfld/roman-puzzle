@@ -90,6 +90,30 @@ const RomanExample = styled.span`
   border-radius: 4px;
 `
 
+const UpdateInfo = styled.section`
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${theme.colors.border};
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: ${theme.colors.textLight};
+
+  h3 {
+    color: ${theme.colors.text};
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  p + p { margin-top: 6px; }
+  time { font-variant-numeric: tabular-nums; }
+`
+
+const builtAt = new Intl.DateTimeFormat('ko-KR', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Seoul',
+}).format(new Date(__BUILD_INFO__.builtAt))
+
 export function HelpModal({ isOpen, onClose }: HelpModalProps) {
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -101,7 +125,15 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
     <Overlay $isOpen={isOpen} onClick={handleOverlayClick}>
       <Content>
         <CloseButton onClick={onClose}>&times;</CloseButton>
-        <Title>게임 방법</Title>
+        <Title>3999 안내</Title>
+        <UpdateInfo aria-labelledby="update-info-title">
+          <h3 id="update-info-title">업데이트 정보</h3>
+          <p>버전 {__BUILD_INFO__.version} · 빌드 {__BUILD_INFO__.commit}</p>
+          <p>생성 시각: <time dateTime={__BUILD_INFO__.builtAt}>{builtAt}</time> (한국 시간)</p>
+          <p>게임판 디자인과 모바일 버튼 배치를 개선하고, 이곳에서 배포본 정보를 확인할 수 있게 했습니다.</p>
+          <p>빌드 번호와 생성 시각으로 지금 보고 있는 배포본을 구분할 수 있습니다.</p>
+        </UpdateInfo>
+        <Title as="h3">게임 방법</Title>
         <Body>
           <p><strong>목표:</strong> 로마숫자 퀘스트를 완료하며 최대한 높은 레벨 달성</p>
           <hr />
