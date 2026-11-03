@@ -101,7 +101,7 @@ export function ControlsPanel({
         <Button $variant="clipboard" onClick={onPasteFromClipboard} title="클립보드에서 불러오기">불러오기</Button>
         <Button onClick={onUndo}>Undo</Button>
         <Button onClick={onRedo}>Redo</Button>
-        <Button $variant="danger" onClick={onReset}>Reset</Button>
+        <Button $variant="help" onClick={onReset}>새 전략</Button>
       </ButtonGroup>
     </Container>
   )

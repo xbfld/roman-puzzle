@@ -4,6 +4,9 @@ import { GameHeader } from './components/GameHeader'
 import { GameGrid } from './components/GameGrid'
 import { TimelineSlider } from './components/TimelineSlider'
 import { SaveSlots } from './components/SaveSlots'
+import { StrategyPanel } from './components/StrategyPanel'
+import { StrategyComparison } from './components/StrategyComparison'
+import { useStrategyStore } from './stores/strategyStore'
 import { ControlsPanel } from './components/ControlsPanel'
 import { HelpModal } from './components/HelpModal'
 import { FloatingMessage } from './components/FloatingMessage'
@@ -12,15 +15,25 @@ import { useSaveStore, parseSlotToTimeline } from './stores/saveStore'
 import { useKeyboard } from './hooks/useKeyboard'
 import { useTouch } from './hooks/useTouch'
 import { theme } from './styles/theme'
-import { SaveSlotType } from './lib/types'
-import { getStateAtIndex, move as gameMove, createInitialState } from './lib/game'
+import { SaveSlot, SaveSlotType } from './lib/types'
+import { createTimeline } from './lib/game'
 
-const Container = styled.main`
+const Container = styled.main<{ $comparing: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 540px;
+  max-width: ${props => props.$comparing ? '1120px' : '540px'};
+`
+
+const LegacySaves = styled.details`
+  width: 100%;
+  margin-bottom: 20px;
+  color: ${theme.colors.textLight};
+  font-size: 0.85rem;
+  summary { cursor: pointer; padding: 12px 0; min-height: 48px; }
+  summary:focus-visible { outline: 2px solid ${theme.colors.primary}; outline-offset: 2px; }
+  p { margin-bottom: 12px; }
 `
 
 const Credits = styled.div`
@@ -38,6 +51,8 @@ function calculateViewportSize(): number {
 
 export default function App() {
   const [helpOpen, setHelpOpen] = useState(false)
+  const [comparing, setComparing] = useState(false)
+  const strategyStore = useStrategyStore()
   const gridRef = useRef<HTMLDivElement>(null)
 
   // Game store
@@ -52,7 +67,8 @@ export default function App() {
     handleStrongRedo,
     handleSeek,
     handleReset,
-    initialize,
+    restoreTimeline,
+    switchStrategy,
     updateViewportSize,
   } = useGameStore()
 
@@ -64,37 +80,24 @@ export default function App() {
     loadFromStorage,
     saveToSlot,
     deleteSlot,
-    autoSaveCurrent,
   } = useSaveStore()
 
-  // Initialize
   useEffect(() => {
     const viewportSize = calculateViewportSize()
     loadFromStorage()
-
-    // currentAutoSlot이 있으면 자동 복원
-    const { currentAutoSlot } = useSaveStore.getState()
-    if (currentAutoSlot && currentAutoSlot.viewportSize === viewportSize) {
-      const savedTimeline = parseSlotToTimeline(currentAutoSlot)
-      const savedState = getStateAtIndex(savedTimeline, savedTimeline.currentIndex)
-
-      useGameStore.setState({
-        timeline: savedTimeline,
-        state: savedState,
-        branchPoint: null,
-        stateCache: new Map(),
-      })
-    } else {
-      initialize(viewportSize)
+    const saves = useSaveStore.getState()
+    const slots = [saves.currentAutoSlot, ...saves.autoSlots, ...saves.manualSlots].filter((slot): slot is SaveSlot => slot !== null)
+    const strategies = useStrategyStore.getState()
+    strategies.hydrate(slots, createTimeline(viewportSize))
+    const loaded = useStrategyStore.getState()
+    const active = loaded.strategies.find(strategy => strategy.id === loaded.activeId)
+    if (active) restoreTimeline(active.timeline)
+    else {
+      const timeline = createTimeline(viewportSize)
+      loaded.addStrategy(timeline, '첫 전략')
+      restoreTimeline(timeline)
     }
-  }, [initialize, loadFromStorage])
-
-  // Auto-save on state change
-  useEffect(() => {
-    if (timeline.moves.length > 0 || state.level > 1) {
-      autoSaveCurrent(timeline, state.level)
-    }
-  }, [timeline, state.level, autoSaveCurrent])
+  }, [loadFromStorage, restoreTimeline])
 
   // Viewport resize
   useEffect(() => {
@@ -120,15 +123,11 @@ export default function App() {
 
     if (!slot) return
 
-    const newTimeline = parseSlotToTimeline(slot)
-    const newState = getStateAtIndex(newTimeline, newTimeline.currentIndex)
-
-    useGameStore.setState({
-      timeline: newTimeline,
-      state: newState,
-      branchPoint: null,
-      stateCache: new Map(),
-    })
+    try {
+      useGameStore.getState().importTimeline(parseSlotToTimeline(slot), '기존 저장에서 불러온 전략')
+    } catch {
+      useGameStore.getState().setMessage('이 저장 기록은 불러올 수 없습니다. 원본 저장은 유지됩니다.')
+    }
   }, [])
 
   const handleDeleteSlot = useCallback((slotId: number, type: SaveSlotType) => {
@@ -167,8 +166,8 @@ export default function App() {
       if (data.version !== 2) throw new Error('Invalid version')
       if (typeof data.moves !== 'string') throw new Error('Invalid moves')
       if (!/^[UDLR]*$/.test(data.moves)) throw new Error('Invalid move characters')
-      if (typeof data.viewportSize !== 'number' || data.viewportSize < 5) throw new Error('Invalid viewportSize')
-      if (typeof data.currentIndex !== 'number' || data.currentIndex < 0) throw new Error('Invalid currentIndex')
+      if (!Number.isInteger(data.viewportSize) || data.viewportSize < 5) throw new Error('Invalid viewportSize')
+      if (!Number.isInteger(data.currentIndex) || data.currentIndex < 0) throw new Error('Invalid currentIndex')
       if (data.currentIndex > data.moves.length) throw new Error('currentIndex out of range')
 
       const slot = {
@@ -182,37 +181,8 @@ export default function App() {
       }
       const newTimeline = parseSlotToTimeline(slot)
 
-      // moves가 실제로 수행 가능한지 검증
-      let testState = createInitialState(data.viewportSize)
-      let validMoveCount = 0
-      const moveDirMap: Record<string, 'up' | 'down' | 'left' | 'right'> = {
-        U: 'up', D: 'down', L: 'left', R: 'right',
-      }
-      for (const char of data.moves) {
-        const dir = moveDirMap[char]
-        const result = gameMove(testState, dir)
-        if (result.state !== testState) {
-          validMoveCount++
-          testState = result.state
-        }
-      }
-
-      // 유효한 이동 수가 moves 길이와 다르면 경고
-      if (validMoveCount !== data.moves.length) {
-        useGameStore.setState({ message: `주의: ${data.moves.length}수 중 ${validMoveCount}수만 유효` })
-        setTimeout(() => useGameStore.setState({ message: null }), 2500)
-      } else {
-        useGameStore.setState({ message: '클립보드에서 불러옴' })
-        setTimeout(() => useGameStore.setState({ message: null }), 1500)
-      }
-
-      const newState = getStateAtIndex(newTimeline, newTimeline.currentIndex)
-      useGameStore.setState({
-        timeline: newTimeline,
-        state: newState,
-        branchPoint: null,
-        stateCache: new Map(),
-      })
+      if (!useGameStore.getState().importTimeline(newTimeline, '클립보드에서 불러온 전략')) return
+      useGameStore.getState().setMessage('클립보드에서 불러옴')
       setTimeout(() => useGameStore.setState({ message: null }), 1500)
     } catch {
       useGameStore.setState({ message: '불러오기 실패: 잘못된 형식' })
@@ -222,6 +192,7 @@ export default function App() {
 
   // Keyboard controls
   useKeyboard({
+    enabled: !comparing,
     onMove: handleMove,
     onUndo: handleUndo,
     onRedo: handleRedo,
@@ -233,38 +204,67 @@ export default function App() {
 
   // Touch controls
   useTouch({
+    enabled: !comparing,
     containerRef: gridRef as React.RefObject<HTMLElement>,
     onMove: handleMove,
   })
 
   return (
-    <Container>
-      <GameHeader state={state} />
+    <Container $comparing={comparing}>
+      {comparing ? (
+        <StrategyComparison
+          strategies={strategyStore.strategies}
+          initialAId={strategyStore.activeId}
+          viewportSize={state.viewportSize}
+          onClose={() => setComparing(false)}
+          onContinue={id => { switchStrategy(id); setComparing(false) }}
+        />
+      ) : (
+        <>
+          <GameHeader state={state} />
 
-      <div ref={gridRef}>
-        <GameGrid state={state} onMove={handleMove} />
-      </div>
+          <div ref={gridRef}>
+            <GameGrid state={state} onMove={handleMove} />
+          </div>
 
-      <TimelineSlider timeline={timeline} onSeek={handleSeek} />
+          <TimelineSlider timeline={timeline} onSeek={handleSeek} />
 
-      <SaveSlots
-        autoSlots={autoSlots}
-        manualSlots={manualSlots}
-        currentAutoSlot={currentAutoSlot}
-        onSave={handleSaveSlot}
-        onLoad={handleLoadSlot}
-        onDelete={handleDeleteSlot}
-      />
+          <StrategyPanel
+            strategies={strategyStore.strategies}
+            activeId={strategyStore.activeId}
+            error={strategyStore.error}
+            onSelect={switchStrategy}
+            onRename={strategyStore.renameStrategy}
+            onTogglePin={strategyStore.togglePin}
+            onToggleCollapse={strategyStore.toggleCollapse}
+            onCompare={() => setComparing(true)}
+          />
 
-      <ControlsPanel
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onReset={handleReset}
-        onHelpOpen={() => setHelpOpen(true)}
-        onCopyToClipboard={handleCopyToClipboard}
-        onPasteFromClipboard={handlePasteFromClipboard}
-      />
+          <LegacySaves>
+            <summary>기존 세이브 슬롯</summary>
+            <p>이전 저장의 원본입니다. 불러오면 별도의 전략으로 열립니다.</p>
+            <SaveSlots
+              autoSlots={autoSlots}
+              manualSlots={manualSlots}
+              currentAutoSlot={currentAutoSlot}
+              onSave={handleSaveSlot}
+              onLoad={handleLoadSlot}
+              onDelete={handleDeleteSlot}
+            />
 
+          </LegacySaves>
+
+          <ControlsPanel
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onReset={handleReset}
+            onHelpOpen={() => setHelpOpen(true)}
+            onCopyToClipboard={handleCopyToClipboard}
+            onPasteFromClipboard={handlePasteFromClipboard}
+          />
+
+        </>
+      )}
       <HelpModal isOpen={helpOpen} onClose={() => setHelpOpen(false)} />
 
       <FloatingMessage message={message} />

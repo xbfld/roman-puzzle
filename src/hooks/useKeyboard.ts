@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react'
 import { Direction, SaveSlotType } from '../lib/types'
 
 interface UseKeyboardProps {
+  enabled?: boolean
   onMove: (direction: Direction) => void
   onUndo: () => void
   onRedo: () => void
@@ -12,6 +13,7 @@ interface UseKeyboardProps {
 }
 
 export function useKeyboard({
+  enabled = true,
   onMove,
   onUndo,
   onRedo,
@@ -21,8 +23,10 @@ export function useKeyboard({
   onLoadSlot,
 }: UseKeyboardProps) {
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!enabled) return
     // 입력 필드에서는 무시
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement
+      || e.target instanceof HTMLSelectElement || e.target instanceof HTMLElement && e.target.isContentEditable) {
       return
     }
 
@@ -87,7 +91,7 @@ export function useKeyboard({
         onMove('right')
         break
     }
-  }, [onMove, onUndo, onRedo, onStrongUndo, onStrongRedo, onSaveSlot, onLoadSlot])
+  }, [enabled, onMove, onUndo, onRedo, onStrongUndo, onStrongRedo, onSaveSlot, onLoadSlot])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)

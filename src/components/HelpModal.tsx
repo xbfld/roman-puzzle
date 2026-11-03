@@ -130,11 +130,14 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           <h3 id="update-info-title">업데이트 정보</h3>
           <p>버전 {__BUILD_INFO__.version} · 빌드 {__BUILD_INFO__.commit}</p>
           <p>생성 시각: <time dateTime={__BUILD_INFO__.builtAt}>{builtAt}</time> (한국 시간)</p>
-          <p>보드는 손을 뗄 때 한 번만 이동합니다. 누르고 있는 동안에는 이동하지 않으며, 스크롤이나 취소된 터치는 이동으로 처리하지 않습니다.</p>
+          <p>과거에서 다른 수를 두면 원래 경로를 보존한 새 전략이 생깁니다. 전략 목록에서 이름을 바꾸거나 고정하고, 두 전략을 비교할 수 있습니다.</p>
           <p>빌드 번호와 생성 시각으로 지금 보고 있는 배포본을 구분할 수 있습니다.</p>
         </UpdateInfo>
         <Title as="h3">게임 방법</Title>
         <Body>
+          <p><strong>전략 탐색:</strong> 레벨과 턴을 되짚어 다른 수를 두세요. 새 전략을 열어도 기존 기록과 각 전략에서 보던 위치는 남습니다.</p>
+          <p><strong>전략 비교:</strong> 같은 레벨 시작점이나 처음 다른 수에서 보드를 비교하세요. 모바일은 A/B 전환, 넓은 화면은 나란히 보기를 지원합니다. 비교 중 탐색은 플레이 기록을 바꾸지 않습니다.</p>
+          <hr />
           <p><strong>목표:</strong> 로마숫자 퀘스트를 완료하며 최대한 높은 레벨 달성</p>
           <hr />
           <p><strong>퀘스트:</strong> 로마숫자를 순서대로 밟고 쉼터(빈칸)로 돌아가기</p>

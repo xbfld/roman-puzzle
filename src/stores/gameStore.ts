@@ -1,33 +1,21 @@
 import { create } from 'zustand'
 import { GameState, GameTimeline, Direction } from '../lib/types'
 import {
-  createInitialState,
-  createTimeline,
-  move,
-  addMoveToTimeline,
-  undoTimeline,
-  redoTimeline,
-  strongUndoTimeline,
-  strongRedoTimeline,
-  seekTimeline,
+  createInitialState, createTimeline, move, addMoveToTimeline,
+  undoTimeline, redoTimeline, strongUndoTimeline, strongRedoTimeline, seekTimeline,
 } from '../lib/game'
-import { useSaveStore } from './saveStore'
-
-interface BranchPoint {
-  timeline: GameTimeline
-  state: GameState
-}
+import { useStrategyStore, validateStrategyTimeline } from './strategyStore'
 
 interface GameStore {
   timeline: GameTimeline
   state: GameState
-  branchPoint: BranchPoint | null
   stateCache: Map<number, GameState>
   cacheInterval: number
   message: string | null
-
-  // Actions
   initialize: (viewportSize: number) => void
+  restoreTimeline: (timeline: GameTimeline) => void
+  switchStrategy: (id: string) => void
+  importTimeline: (timeline: GameTimeline, name?: string) => boolean
   handleMove: (direction: Direction) => void
   handleUndo: () => void
   handleRedo: () => void
@@ -40,205 +28,103 @@ interface GameStore {
 }
 
 function calculateViewportSize(): number {
-  const screenWidth = window.innerWidth
-  if (screenWidth <= 400) return 7
-  if (screenWidth <= 500) return 9
+  if (window.innerWidth <= 400) return 7
+  if (window.innerWidth <= 500) return 9
   return 11
 }
 
-function cacheState(cache: Map<number, GameState>, index: number, state: GameState): void {
-  const stateCopy: GameState = {
-    ...state,
-    tiles: new Map(state.tiles),
-    playerPosition: { ...state.playerPosition },
-  }
-  cache.set(index, stateCopy)
-}
-
-function getStateAtIndexOptimized(
-  timeline: GameTimeline,
-  cache: Map<number, GameState>,
-  index: number
-): GameState {
-  let nearestCacheIndex = 0
-  let nearestState = createInitialState(timeline.viewportSize)
-
+function getStateAtIndexOptimized(timeline: GameTimeline, cache: Map<number, GameState>, index: number): GameState {
+  let nearestIndex = 0
+  let state = createInitialState(timeline.viewportSize)
   for (const [cachedIndex, cachedState] of cache) {
-    if (cachedIndex <= index && cachedIndex > nearestCacheIndex) {
-      nearestCacheIndex = cachedIndex
-      nearestState = cachedState
+    if (cachedIndex <= index && cachedIndex > nearestIndex) {
+      nearestIndex = cachedIndex
+      state = { ...cachedState, tiles: new Map(cachedState.tiles), playerPosition: { ...cachedState.playerPosition } }
     }
   }
-
-  let state: GameState = {
-    ...nearestState,
-    tiles: new Map(nearestState.tiles),
-    playerPosition: { ...nearestState.playerPosition },
-  }
-
-  for (let i = nearestCacheIndex; i < index; i++) {
-    const result = move(state, timeline.moves[i])
-    state = result.state
-  }
-
-  return state
+  for (let i = nearestIndex; i < index; i++) state = move(state, timeline.moves[i]).state
+  return { ...state, viewportSize: timeline.viewportSize }
 }
 
-export const useGameStore = create<GameStore>((set, get) => ({
-  timeline: createTimeline(calculateViewportSize()),
-  state: createInitialState(calculateViewportSize()),
-  branchPoint: null,
-  stateCache: new Map(),
-  cacheInterval: 50,
-  message: null,
-
-  initialize: (viewportSize: number) => {
-    set({
-      timeline: createTimeline(viewportSize),
-      state: createInitialState(viewportSize),
-      branchPoint: null,
-      stateCache: new Map(),
-    })
-  },
-
-  handleMove: (direction: Direction) => {
-    const { timeline, state, branchPoint, stateCache, cacheInterval } = get()
-
-    // 리두와 동일한 동작인지 확인
-    const hasRedoHistory = timeline.currentIndex < timeline.moves.length
-    const nextRedoMove = hasRedoHistory ? timeline.moves[timeline.currentIndex] : null
-    const isRedoEquivalent = nextRedoMove === direction
-
-    if (isRedoEquivalent) {
-      const newTimeline = { ...timeline, currentIndex: timeline.currentIndex + 1 }
-      const newState = getStateAtIndexOptimized(newTimeline, stateCache, newTimeline.currentIndex)
-      set({ timeline: newTimeline, state: newState, branchPoint: null })
-      return
-    }
-
-    // 세계선 분기 감지 - 이전 세계선을 자동저장 슬롯에 저장
-    if (hasRedoHistory && branchPoint) {
-      useSaveStore.getState().saveWorldlineToAutoSlot(
-        branchPoint.timeline,
-        branchPoint.state.level
-      )
-      set({ branchPoint: null })
-    }
-
-    const { timeline: newTimeline, moveResult } = addMoveToTimeline(timeline, direction, state)
-
-    if (moveResult.state !== state) {
-      const newCache = new Map(stateCache)
-      if (newTimeline.currentIndex % cacheInterval === 0) {
-        cacheState(newCache, newTimeline.currentIndex, moveResult.state)
+export const useGameStore = create<GameStore>((set, get) => {
+  const seek = (timeline: GameTimeline) => {
+    if (timeline.currentIndex === get().timeline.currentIndex) return
+    const state = getStateAtIndexOptimized(timeline, get().stateCache, timeline.currentIndex)
+    set({ timeline, state })
+    useStrategyStore.getState().syncActive(timeline)
+  }
+  return {
+    timeline: createTimeline(calculateViewportSize()),
+    state: createInitialState(calculateViewportSize()),
+    stateCache: new Map(), cacheInterval: 50, message: null,
+    initialize: viewportSize => {
+      const timeline = createTimeline(viewportSize)
+      set({ timeline, state: createInitialState(viewportSize), stateCache: new Map() })
+    },
+    restoreTimeline: saved => {
+      const timeline = { ...saved, viewportSize: get().state.viewportSize }
+      const state = getStateAtIndexOptimized(timeline, new Map(), timeline.currentIndex)
+      set({ timeline, state, stateCache: new Map(), message: null })
+      useStrategyStore.getState().syncActive(timeline)
+    },
+    switchStrategy: id => {
+      useStrategyStore.getState().syncActive(get().timeline)
+      const timeline = useStrategyStore.getState().selectStrategy(id)
+      if (timeline) get().restoreTimeline(timeline)
+    },
+    importTimeline: (timeline, name = '불러온 전략') => {
+      try {
+        const validated = validateStrategyTimeline(timeline)
+        useStrategyStore.getState().addStrategy(validated, name, 'import')
+        get().restoreTimeline(validated)
+        return true
+      } catch {
+        set({ message: '불러오기 실패: 이동 기록이나 탐색 위치가 올바르지 않습니다.' })
+        setTimeout(() => set({ message: null }), 2500)
+        return false
       }
+    },
+    handleMove: direction => {
+      const { timeline, state, stateCache, cacheInterval } = get()
+      const hasFuture = timeline.currentIndex < timeline.moves.length
+      if (hasFuture && timeline.moves[timeline.currentIndex] === direction) {
+        seek(redoTimeline(timeline))
+        return
+      }
+      const { timeline: next, moveResult } = addMoveToTimeline(timeline, direction, state)
+      if (moveResult.state === state) return
 
-      set({
-        timeline: newTimeline,
-        state: moveResult.state,
-        stateCache: newCache,
-      })
-
+      const strategies = useStrategyStore.getState()
+      // Preserve the entire original future before writing a valid new branch.
+      if (hasFuture && strategies.activeId) {
+        strategies.syncActive(timeline)
+        strategies.createBranch(strategies.activeId, timeline.currentIndex, next)
+      } else {
+        strategies.syncActive(next)
+      }
+      const cache = new Map([...stateCache].filter(([index]) => index <= timeline.currentIndex))
+      if (next.currentIndex % cacheInterval === 0) cache.set(next.currentIndex, moveResult.state)
+      set({ timeline: next, state: moveResult.state, stateCache: cache })
       if (moveResult.leveledUp) {
         set({ message: `Level ${moveResult.state.level}!` })
         setTimeout(() => set({ message: null }), 1500)
       }
-    }
-  },
-
-  handleUndo: () => {
-    const { timeline, state, branchPoint, stateCache } = get()
-    const newTimeline = undoTimeline(timeline)
-
-    if (newTimeline.currentIndex !== timeline.currentIndex) {
-      const newBranchPoint = !branchPoint && timeline.currentIndex === timeline.moves.length
-        ? { timeline: { ...timeline }, state }
-        : branchPoint
-
-      const newState = getStateAtIndexOptimized(newTimeline, stateCache, newTimeline.currentIndex)
-      set({ timeline: newTimeline, state: newState, branchPoint: newBranchPoint })
-    }
-  },
-
-  handleRedo: () => {
-    const { timeline, stateCache } = get()
-    const newTimeline = redoTimeline(timeline)
-
-    if (newTimeline.currentIndex !== timeline.currentIndex) {
-      const newState = getStateAtIndexOptimized(newTimeline, stateCache, newTimeline.currentIndex)
-      const newBranchPoint = newTimeline.currentIndex === newTimeline.moves.length ? null : get().branchPoint
-      set({ timeline: newTimeline, state: newState, branchPoint: newBranchPoint })
-    }
-  },
-
-  handleStrongUndo: () => {
-    const { timeline, state, branchPoint, stateCache } = get()
-    const newTimeline = strongUndoTimeline(timeline)
-
-    if (newTimeline.currentIndex !== timeline.currentIndex) {
-      const newBranchPoint = !branchPoint && timeline.currentIndex === timeline.moves.length
-        ? { timeline: { ...timeline }, state }
-        : branchPoint
-
-      const newState = getStateAtIndexOptimized(newTimeline, stateCache, newTimeline.currentIndex)
-      set({
-        timeline: newTimeline,
-        state: newState,
-        branchPoint: newBranchPoint,
-        message: `Lv.${newState.level} 시작점`,
-      })
-      setTimeout(() => set({ message: null }), 1000)
-    }
-  },
-
-  handleStrongRedo: () => {
-    const { timeline, stateCache } = get()
-    const newTimeline = strongRedoTimeline(timeline)
-
-    if (newTimeline.currentIndex !== timeline.currentIndex) {
-      const newState = getStateAtIndexOptimized(newTimeline, stateCache, newTimeline.currentIndex)
-      const newBranchPoint = newTimeline.currentIndex === newTimeline.moves.length ? null : get().branchPoint
-
-      set({ timeline: newTimeline, state: newState, branchPoint: newBranchPoint })
-
-      if (newTimeline.currentIndex < newTimeline.moves.length) {
-        set({ message: `Lv.${newState.level} 시작점` })
-        setTimeout(() => set({ message: null }), 1000)
-      }
-    }
-  },
-
-  handleSeek: (index: number) => {
-    const { timeline, state, branchPoint, stateCache } = get()
-    const newTimeline = seekTimeline(timeline, index)
-
-    if (newTimeline.currentIndex !== timeline.currentIndex) {
-      const newBranchPoint = !branchPoint && timeline.currentIndex === timeline.moves.length && index < timeline.moves.length
-        ? { timeline: { ...timeline }, state }
-        : newTimeline.currentIndex === newTimeline.moves.length ? null : branchPoint
-
-      const newState = getStateAtIndexOptimized(newTimeline, stateCache, newTimeline.currentIndex)
-      set({ timeline: newTimeline, state: newState, branchPoint: newBranchPoint })
-    }
-  },
-
-  handleReset: () => {
-    const { timeline } = get()
-    set({
-      timeline: createTimeline(timeline.viewportSize),
-      state: createInitialState(timeline.viewportSize),
-      branchPoint: null,
-      stateCache: new Map(),
-    })
-  },
-
-  setMessage: (message: string | null) => set({ message }),
-
-  updateViewportSize: (size: number) => {
-    const { timeline, state } = get()
-    set({
-      timeline: { ...timeline, viewportSize: size },
-      state: { ...state, viewportSize: size },
-    })
-  },
-}))
+    },
+    handleUndo: () => seek(undoTimeline(get().timeline)),
+    handleRedo: () => seek(redoTimeline(get().timeline)),
+    handleStrongUndo: () => seek(strongUndoTimeline(get().timeline)),
+    handleStrongRedo: () => seek(strongRedoTimeline(get().timeline)),
+    handleSeek: index => seek(seekTimeline(get().timeline, index)),
+    handleReset: () => {
+      const timeline = createTimeline(get().state.viewportSize)
+      useStrategyStore.getState().addStrategy(timeline, '새 전략', 'manual')
+      get().restoreTimeline(timeline)
+    },
+    setMessage: message => set({ message }),
+    updateViewportSize: size => {
+      const timeline = { ...get().timeline, viewportSize: size }
+      set({ timeline, state: { ...get().state, viewportSize: size } })
+      useStrategyStore.getState().syncActive(timeline)
+    },
+  }
+})
