@@ -130,7 +130,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           <h3 id="update-info-title">업데이트 정보</h3>
           <p>버전 {__BUILD_INFO__.version} · 빌드 {__BUILD_INFO__.commit}</p>
           <p>생성 시각: <time dateTime={__BUILD_INFO__.builtAt}>{builtAt}</time> (한국 시간)</p>
-          <p>게임판 디자인과 모바일 버튼 배치를 개선하고, 이곳에서 배포본 정보를 확인할 수 있게 했습니다.</p>
+          <p>타임라인 터치 영역을 넓히고, 한 수씩 또는 레벨별로 이동하는 버튼을 추가했습니다.</p>
           <p>빌드 번호와 생성 시각으로 지금 보고 있는 배포본을 구분할 수 있습니다.</p>
         </UpdateInfo>
         <Title as="h3">게임 방법</Title>

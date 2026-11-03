@@ -7,142 +7,161 @@ interface TimelineSliderProps {
   onSeek: (index: number) => void
 }
 
-const Container = styled.div`
+const Container = styled.section`
   width: 100%;
   max-width: 540px;
   padding: 8px 0;
   margin-bottom: 10px;
 `
 
-const Track = styled.div`
-  position: relative;
-  padding: 8px 0;
+const Info = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: ${theme.colors.textLight};
+  font-variant-numeric: tabular-nums;
 `
 
+const Track = styled.div`
+  position: relative;
+`
+
+// Markers share the thumb's travel distance and never intercept a drag.
 const Markers = styled.div`
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
+  inset: 0 16px;
   pointer-events: none;
 `
 
-const Marker = styled.div<{ $position: number }>`
+const Marker = styled.span<{ $position: number }>`
   position: absolute;
   left: ${props => props.$position}%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
-  background: ${theme.colors.success};
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: ${theme.shadows.small};
-  pointer-events: auto;
-  cursor: pointer;
-  z-index: 2;
-
-  &:hover {
-    transform: translate(-50%, -50%) scale(1.3);
-  }
+  width: 6px;
+  height: 10px;
+  background: ${theme.colors.successDark};
+  border: 1px solid ${theme.colors.background};
+  border-radius: 2px;
 `
 
-const Slider = styled.input`
+const Slider = styled.input<{ $progress: number }>`
+  display: block;
   width: 100%;
-  height: 6px;
+  height: 48px;
+  margin: 0;
   -webkit-appearance: none;
   appearance: none;
-  background: linear-gradient(90deg, ${theme.colors.success} 0%, ${theme.colors.shelter} 0%);
-  border-radius: 3px;
-
+  background: transparent;
   cursor: pointer;
+  touch-action: none;
+
+  &::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, ${theme.colors.primary} ${props => props.$progress}%, ${theme.colors.shelterDark} ${props => props.$progress}%);
+  }
 
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
+    width: 32px;
+    height: 32px;
+    margin-top: -13px;
     background: ${theme.colors.primary};
     border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #fff;
+    border: 3px solid ${theme.colors.background};
     box-shadow: ${theme.shadows.small};
-    transition: transform 0.1s ease;
   }
 
-  &::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
+  &::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, ${theme.colors.primary} ${props => props.$progress}%, ${theme.colors.shelterDark} ${props => props.$progress}%);
   }
 
   &::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
+    box-sizing: border-box;
+    width: 32px;
+    height: 32px;
     background: ${theme.colors.primary};
     border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid #fff;
+    border: 3px solid ${theme.colors.background};
     box-shadow: ${theme.shadows.small};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 `
 
-const Info = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 4px;
+const Navigation = styled.div`
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 `
 
-const Position = styled.span`
+const SeekButton = styled.button`
+  min-height: 44px;
+  padding: 8px 4px;
+  border: 1px solid ${theme.colors.border};
+  border-radius: 6px;
+  background: transparent;
+  color: ${theme.colors.primary};
   font-size: 0.75rem;
-  color: ${theme.colors.textMuted};
-  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) { background: ${theme.colors.backgroundAlt}; }
+  &:active:not(:disabled) { background: ${theme.colors.shelter}; }
+  &:disabled {
+    color: ${theme.colors.textDisabled};
+    opacity: 0.5;
+    cursor: default;
+  }
 `
 
 export function TimelineSlider({ timeline, onSeek }: TimelineSliderProps) {
   const maxMoves = timeline.moves.length
   const currentIndex = timeline.currentIndex
   const progress = maxMoves > 0 ? (currentIndex / maxMoves) * 100 : 0
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onSeek(parseInt(e.target.value, 10))
-  }
-
-  const handleMarkerClick = (index: number) => {
-    onSeek(index)
-  }
+  const previousLevel = timeline.levelUpIndices.reduce((previous, index) => index < currentIndex ? index : previous, 0)
+  const nextLevel = timeline.levelUpIndices.find(index => index > currentIndex)
 
   return (
-    <Container>
+    <Container aria-label="타임라인">
+      <Info>
+        <span>이동 기록</span>
+        <span>{maxMoves === 0 ? '이동하면 기록이 쌓여요' : `${currentIndex} / ${maxMoves}수`}</span>
+      </Info>
       <Track>
-        <Markers>
-          {timeline.levelUpIndices.map((idx, level) => {
-            if (idx === 0 || maxMoves === 0) return null
-            const position = (idx / maxMoves) * 100
-            return (
-              <Marker
-                key={level}
-                $position={position}
-                onClick={() => handleMarkerClick(idx)}
-                title={`Level ${level + 1}`}
-              />
-            )
-          })}
-        </Markers>
         <Slider
           aria-label="이동 기록"
+          aria-valuetext={`${maxMoves}수 중 ${currentIndex}수`}
           type="range"
           min={0}
           max={maxMoves}
+          step={1}
           value={currentIndex}
-          onChange={handleChange}
-          style={{
-            background: `linear-gradient(90deg, ${theme.colors.success} ${progress}%, ${theme.colors.shelter} ${progress}%)`,
-          }}
+          disabled={maxMoves === 0}
+          $progress={progress}
+          onChange={event => onSeek(Number(event.target.value))}
         />
+        <Markers aria-hidden="true">
+          {timeline.levelUpIndices.map((index, level) => {
+            if (index === 0 || maxMoves === 0) return null
+            return <Marker key={level} $position={(index / maxMoves) * 100} />
+          })}
+        </Markers>
       </Track>
-      <Info>
-        <Position>{currentIndex} / {maxMoves}</Position>
-      </Info>
+      <Navigation aria-label="기록 이동">
+        <SeekButton disabled={currentIndex === 0} onClick={() => onSeek(previousLevel)}>이전 레벨</SeekButton>
+        <SeekButton disabled={currentIndex === 0} onClick={() => onSeek(currentIndex - 1)}>이전 수</SeekButton>
+        <SeekButton disabled={currentIndex === maxMoves} onClick={() => onSeek(currentIndex + 1)}>다음 수</SeekButton>
+        <SeekButton disabled={nextLevel === undefined} onClick={() => nextLevel !== undefined && onSeek(nextLevel)}>다음 레벨</SeekButton>
+      </Navigation>
     </Container>
   )
 }
