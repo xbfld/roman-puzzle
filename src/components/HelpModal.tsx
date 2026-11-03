@@ -130,7 +130,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           <h3 id="update-info-title">업데이트 정보</h3>
           <p>버전 {__BUILD_INFO__.version} · 빌드 {__BUILD_INFO__.commit}</p>
           <p>생성 시각: <time dateTime={__BUILD_INFO__.builtAt}>{builtAt}</time> (한국 시간)</p>
-          <p>레벨 탐색과 레벨 안의 턴 탐색을 분리하고, 슬라이더와 이전·다음 버튼을 더 크게 만들었습니다.</p>
+          <p>보드는 손을 뗄 때 한 번만 이동합니다. 누르고 있는 동안에는 이동하지 않으며, 스크롤이나 취소된 터치는 이동으로 처리하지 않습니다.</p>
           <p>빌드 번호와 생성 시각으로 지금 보고 있는 배포본을 구분할 수 있습니다.</p>
         </UpdateInfo>
         <Title as="h3">게임 방법</Title>
