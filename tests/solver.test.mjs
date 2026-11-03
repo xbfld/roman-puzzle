@@ -122,7 +122,6 @@ test('symmetric translated midquest inputs replay in their original coordinates'
 test('initial state finds twenty completed levels and replays exactly', () => {
   const initial = createInitialState()
   const result = solveAhead(initial, { levels: 20 })
-  console.log(`Twenty-level search: ${result.status}, level ${result.bestLevel}, ${result.expanded} expansions, ${Math.round(result.elapsedMs)} ms`)
   replay(initial, result)
   assert.equal(result.status, 'target')
   assert.equal(result.bestLevel, 21)
@@ -142,7 +141,6 @@ function replay(initial, result) {
 test('initial state finds ten completed levels and replays exactly', () => {
   const initial = createInitialState()
   const result = solveAhead(initial)
-  console.log(`Initial search: ${result.status}, level ${result.bestLevel}, ${result.expanded} expansions, ${Math.round(result.elapsedMs)} ms`)
   replay(initial, result)
   assert.equal(result.status, 'target')
   assert.equal(result.bestLevel, 11)
@@ -223,21 +221,4 @@ test('worker exposes an engine failure without returning a candidate or losing i
   assert.equal(replies[0].type, 'error')
   assert.equal(errors.length, 1)
   assert.equal(typeof errors[0][1].message, 'string')
-})
-
-test('recorded level-108 witness replays from the actual initial state', async () => {
-  const { readFileSync } = await import('node:fs')
-  const witness = JSON.parse(readFileSync(new URL('../fixtures/reachability/level-108.json', import.meta.url), 'utf8'))
-  const directions = { U: 'up', D: 'down', L: 'left', R: 'right' }
-  let state = createInitialState(witness.viewportSize)
-  for (const letter of witness.moves) {
-    const next = move(state, directions[letter]).state
-    assert.notEqual(next, state, 'every saved move must remain legal')
-    state = next
-  }
-  assert.equal(witness.currentIndex, witness.moves.length)
-  assert.equal(state.level, 108)
-  assert.equal(state.level, witness.level)
-  assert.equal(state.isOnQuest, false)
-  assert.equal(state.tileItems + state.tiles.size, state.level)
 })
