@@ -130,7 +130,7 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
           <h3 id="update-info-title">업데이트 정보</h3>
           <p>버전 {__BUILD_INFO__.version} · 빌드 {__BUILD_INFO__.commit}</p>
           <p>생성 시각: <time dateTime={__BUILD_INFO__.builtAt}>{builtAt}</time> (한국 시간)</p>
-          <p>현재 위치에서 앞으로 10레벨 도달을 탐색할 수 있습니다. 결과는 원래 전략과 별개로 저장하며, 추천 방향을 확인하고 한 수씩 따라갈 수 있습니다.</p>
+          <p>추천 경로 탐색에서 이동·회전·반전으로 같은 보드의 중복을 제거합니다. 찾은 경로는 원래 좌표와 방향 그대로 재생됩니다.</p>
           <p>빌드 번호와 생성 시각으로 지금 보고 있는 배포본을 구분할 수 있습니다.</p>
         </UpdateInfo>
         <Title as="h3">게임 방법</Title>

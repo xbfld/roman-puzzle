@@ -7,12 +7,126 @@ const require = createRequire(import.meta.resolve('vite'))
 const { buildSync } = require('esbuild')
 const compiled = buildSync({
   stdin: {
-    contents: `export { solveAhead } from './lib/solver'; export { createInitialState, move } from './lib/game'; export { toRoman } from './lib/roman';`,
+    contents: `export { solveAhead, canonicalStateKey } from './lib/solver'; export { createInitialState, move } from './lib/game'; export { toRoman } from './lib/roman';`,
     resolveDir: fileURLToPath(new URL('../src/', import.meta.url)), loader: 'ts',
   },
   bundle: true, platform: 'node', format: 'esm', write: false,
 })
-const { solveAhead, createInitialState, move, toRoman } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
+const { solveAhead, canonicalStateKey, createInitialState, move, toRoman } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
+
+// Independent geometric construction also maps absolute directions for the rule checks.
+const symmetries = Array.from({ length: 8 }, (_, index) => (x, y) => {
+  if (index >= 4) x = -x
+  for (let rotation = 0; rotation < index % 4; rotation++) [x, y] = [-y, x]
+  return [x, y]
+})
+const vectors = { up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0] }
+function transformState(state, transform, tx = 13, ty = -7) {
+  const [px, py] = transform(state.playerPosition.x, state.playerPosition.y)
+  return {
+    ...state,
+    playerPosition: { x: px + tx, y: py + ty },
+    tiles: new Map([...state.tiles].map(([key, tile]) => {
+      const [x, y] = transform(...key.split(',').map(Number))
+      return [`${x + tx},${y + ty}`, { ...tile }]
+    })),
+  }
+}
+function mappedDirection(direction, transform) {
+  const [x, y] = transform(...vectors[direction])
+  return Object.keys(vectors).find(key => vectors[key][0] === x && vectors[key][1] === y)
+}
+function asymmetricState() {
+  return {
+    ...createInitialState(), level: 14, currentQuest: 'XIV', tileItems: 4,
+    tiles: new Map([
+      ['1,0', { char: 'X', level: 10 }],
+      ['1,1', { char: 'I', level: 1 }],
+      ['2,1', { char: 'V', level: 5 }],
+      ['-2,1', { char: 'L', level: 50 }],
+    ]),
+  }
+}
+
+test('canonical keys identify all eight translated symmetries without mutating the state', () => {
+  const initial = asymmetricState()
+  const snapshot = structuredClone(initial)
+  const key = canonicalStateKey(initial)
+  for (const transform of symmetries) {
+    const equivalent = transformState(initial, transform)
+    equivalent.viewportSize = 21
+    for (const tile of equivalent.tiles.values()) tile.level = 999
+    equivalent.tiles = new Map([...equivalent.tiles].reverse())
+    assert.equal(canonicalStateKey(equivalent), key)
+  }
+  assert.deepEqual(initial, snapshot)
+})
+
+test('canonical keys retain board characters, geometry, resources, and quest semantics', () => {
+  const initial = asymmetricState()
+  const key = canonicalStateKey(initial)
+  const changedChar = structuredClone(initial)
+  changedChar.tiles.get('1,0').char = 'M'
+  const changedPosition = structuredClone(initial)
+  changedPosition.tiles.set('3,1', changedPosition.tiles.get('2,1'))
+  changedPosition.tiles.delete('2,1')
+  const extraTile = structuredClone(initial)
+  extraTile.tiles.set('0,2', { char: 'I', level: 1 })
+  for (const distinct of [
+    changedChar, changedPosition, extraTile,
+    { ...initial, tileItems: 3 }, { ...initial, level: 15 },
+    { ...initial, questProgress: 1 }, { ...initial, isOnQuest: true },
+    { ...initial, currentQuest: 'XV' },
+  ]) assert.notEqual(canonicalStateKey(distinct), key)
+})
+
+test('all symmetries preserve legal moves, placement, progress, and level-up with mapped directions', () => {
+  const shelter = asymmetricState()
+  const first = move(shelter, 'right').state
+  const second = move(first, 'down').state
+  const completed = move(second, 'right').state
+  const states = [shelter, first, second, completed, { ...first, tileItems: 0 }]
+  let legal = 0
+  let illegal = 0
+  let leveledUp = 0
+  for (const state of states) {
+    for (const transform of symmetries) {
+      const transformed = transformState(state, transform)
+      for (const direction of Object.keys(vectors)) {
+        const original = move(state, direction)
+        const actual = move(transformed, mappedDirection(direction, transform))
+        assert.equal(actual.state === transformed, original.state === state)
+        assert.equal(actual.leveledUp, original.leveledUp)
+        assert.equal(actual.autoPlacedTile, original.autoPlacedTile)
+        assert.deepEqual(actual.state, transformState(original.state, transform))
+        if (original.state === state) illegal++
+        else legal++
+        if (original.leveledUp) leveledUp++
+      }
+    }
+  }
+  assert.ok(legal > 0 && illegal > 0 && leveledUp > 0)
+})
+
+test('symmetric translated midquest inputs replay in their original coordinates', () => {
+  const midquest = move(asymmetricState(), 'right').state
+  for (const transform of symmetries) {
+    const initial = transformState(midquest, transform)
+    const result = solveAhead(initial, { levels: 2 })
+    replay(initial, result)
+    assert.equal(result.status, 'target')
+    assert.equal(result.bestLevel, 16)
+  }
+})
+
+test('initial state finds twenty completed levels and replays exactly', () => {
+  const initial = createInitialState()
+  const result = solveAhead(initial, { levels: 20 })
+  console.log(`Twenty-level search: ${result.status}, level ${result.bestLevel}, ${result.expanded} expansions, ${Math.round(result.elapsedMs)} ms`)
+  replay(initial, result)
+  assert.equal(result.status, 'target')
+  assert.equal(result.bestLevel, 21)
+})
 
 function replay(initial, result) {
   let state = initial
@@ -109,4 +223,21 @@ test('worker exposes an engine failure without returning a candidate or losing i
   assert.equal(replies[0].type, 'error')
   assert.equal(errors.length, 1)
   assert.equal(typeof errors[0][1].message, 'string')
+})
+
+test('recorded level-108 witness replays from the actual initial state', async () => {
+  const { readFileSync } = await import('node:fs')
+  const witness = JSON.parse(readFileSync(new URL('../fixtures/reachability/level-108.json', import.meta.url), 'utf8'))
+  const directions = { U: 'up', D: 'down', L: 'left', R: 'right' }
+  let state = createInitialState(witness.viewportSize)
+  for (const letter of witness.moves) {
+    const next = move(state, directions[letter]).state
+    assert.notEqual(next, state, 'every saved move must remain legal')
+    state = next
+  }
+  assert.equal(witness.currentIndex, witness.moves.length)
+  assert.equal(state.level, 108)
+  assert.equal(state.level, witness.level)
+  assert.equal(state.isOnQuest, false)
+  assert.equal(state.tileItems + state.tiles.size, state.level)
 })

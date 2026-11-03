@@ -34,14 +34,31 @@ function bounded(value: number | undefined, fallback: number, maximum: number): 
 }
 
 // Tile creation levels affect the display, but not legal moves or future resources.
-// Translate around the player so identical arrangements reached elsewhere share a key.
-function stateKey(state: GameState): string {
+// Compare all square symmetries around the player without transforming the route
+// or the representative state, whose original coordinates are needed for replay.
+export function canonicalStateKey(state: GameState): string {
   const { x, y } = state.playerPosition;
-  const tiles = [...state.tiles].map(([key, tile]) => {
-    const [tx, ty] = key.split(',').map(Number);
-    return `${tx - x},${ty - y}:${tile.char}`;
-  }).sort().join(';');
-  return `${state.level}/${state.questProgress}/${Number(state.isOnQuest)}/${state.tileItems}/${tiles}`;
+  const variants: string[][] = Array.from({ length: 8 }, () => []);
+  for (const [key, tile] of state.tiles) {
+    const comma = key.indexOf(',');
+    const dx = Number(key.slice(0, comma)) - x;
+    const dy = Number(key.slice(comma + 1)) - y;
+    const char = tile.char;
+    variants[0].push(`${dx},${dy}:${char}`);
+    variants[1].push(`${-dy},${dx}:${char}`);
+    variants[2].push(`${-dx},${-dy}:${char}`);
+    variants[3].push(`${dy},${-dx}:${char}`);
+    variants[4].push(`${-dx},${dy}:${char}`);
+    variants[5].push(`${-dy},${-dx}:${char}`);
+    variants[6].push(`${dx},${-dy}:${char}`);
+    variants[7].push(`${dy},${dx}:${char}`);
+  }
+  let tiles: string | undefined;
+  for (const variant of variants) {
+    const serialized = variant.sort().join(';');
+    if (tiles === undefined || serialized < tiles) tiles = serialized;
+  }
+  return `${state.level}/${state.currentQuest}/${state.questProgress}/${Number(state.isOnQuest)}/${state.tileItems}/${tiles}`;
 }
 
 function evaluate(state: GameState): number {
@@ -100,7 +117,7 @@ export function solveAhead(initial: GameState, options: SolveOptions = {}): Solv
           expanded++;
           const result = move(candidate.state, direction);
           if (result.state === candidate.state) continue;
-          const key = stateKey(result.state);
+          const key = canonicalStateKey(result.state);
           const keys = result.leveledUp ? endpointKeys : nextKeys;
           if (keys.has(key)) continue;
           keys.add(key);
