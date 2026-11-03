@@ -13,14 +13,14 @@ interface SaveSlotsProps {
 }
 
 const Container = styled.div`
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  background: ${theme.colors.backgroundAlt};
-  border-radius: ${theme.sizes.borderRadius};
-  border: 1px solid ${theme.colors.border};
+  width: 100%;
+  margin-bottom: 20px;
+  padding: 16px 0;
+  border-top: 1px solid ${theme.colors.border};
+  border-bottom: 1px solid ${theme.colors.border};
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
 `
 
 const SlotGroup = styled.div`
@@ -30,23 +30,24 @@ const SlotGroup = styled.div`
 `
 
 const SlotLabel = styled.div`
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: ${theme.colors.textLight};
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  width: 42px;
+  width: 52px;
+  padding-top: 12px;
   text-align: right;
   flex-shrink: 0;
 `
 
 const Slots = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  flex-wrap: wrap;
+  gap: 6px;
   flex: 1;
 `
 
-const SlotButton = styled.button<{
+const SlotButton = styled.div<{
   $hasData: boolean
   $isAuto: boolean
   $isCurrent: boolean
@@ -56,16 +57,19 @@ const SlotButton = styled.button<{
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 8px;
-  width: 100%;
+  padding: 0 10px;
+  min-height: 44px;
+  width: auto;
+  flex: 1 0 62px;
+  flex-wrap: wrap;
   background: ${props => {
     if (props.$isCurrent) return theme.colors.warningLight
-    if (props.$isAuto) return props.$hasData ? '#e3f2fd' : theme.colors.autoSlotBg
-    return props.$hasData ? '#f0fff0' : '#fff'
+    if (props.$isAuto) return props.$hasData ? theme.colors.backgroundAlt : theme.colors.autoSlotBg
+    return props.$hasData ? theme.colors.successLight : '#fff'
   }};
   border: 1px solid ${props => {
     if (props.$isCurrent) return '#ffb74d'
-    if (props.$isAuto) return props.$hasData ? '#64b5f6' : '#b0bec5'
+    if (props.$isAuto) return theme.colors.border
     return props.$hasData ? theme.colors.success : '#ddd'
   }};
   border-radius: ${theme.sizes.borderRadiusSmall};
@@ -81,6 +85,16 @@ const SlotButton = styled.button<{
   &:hover {
     border-color: ${props => props.$isAuto ? '#78909c' : theme.colors.primary};
   }
+`
+
+const SlotTrigger = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-height: 44px;
+  background: transparent;
+  text-align: left;
 `
 
 const SlotNum = styled.span<{ $isAuto: boolean; $isCurrent: boolean }>`
@@ -107,7 +121,8 @@ const SlotActions = styled.div<{ $visible: boolean }>`
 `
 
 const ActionButton = styled.button<{ $variant: 'load' | 'delete' }>`
-  padding: 2px 6px;
+  padding: 8px;
+  min-height: 36px;
   font-size: 0.6rem;
   border: none;
   border-radius: 3px;
@@ -181,12 +196,18 @@ export function SaveSlots({
         $isAuto={type === 'auto'}
         $isCurrent={isCurrent}
         $isActive={isActive}
-        onClick={() => handleSlotClick(slotId, type, hasData, isCurrent)}
       >
-        <SlotNum $isAuto={type === 'auto'} $isCurrent={isCurrent}>{label}</SlotNum>
-        <SlotInfo $hasData={hasData} $isCurrent={isCurrent}>
-          {slot ? `Lv${slot.level}` : isCurrent && currentAutoSlot ? `Lv${currentAutoSlot.level}` : '-'}
-        </SlotInfo>
+        <SlotTrigger
+          type="button"
+          aria-label={`${type === 'auto' ? 'Auto' : 'Manual'} ${label}: ${slot ? `Lv${slot.level}` : isCurrent ? '현재 게임' : '빈 슬롯'}`}
+          aria-expanded={isActive}
+          onClick={() => handleSlotClick(slotId, type, hasData, isCurrent)}
+        >
+          <SlotNum $isAuto={type === 'auto'} $isCurrent={isCurrent}>{label}</SlotNum>
+          <SlotInfo $hasData={hasData} $isCurrent={isCurrent}>
+            {slot ? `Lv${slot.level}` : isCurrent && currentAutoSlot ? `Lv${currentAutoSlot.level}` : '-'}
+          </SlotInfo>
+        </SlotTrigger>
         <SlotActions $visible={isActive}>
           <ActionButton $variant="load" onClick={(e) => handleLoad(slotId, type, e)}>Load</ActionButton>
           {!isCurrent && <ActionButton $variant="delete" onClick={(e) => handleDelete(slotId, type, e)}>Del</ActionButton>}

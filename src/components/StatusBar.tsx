@@ -20,9 +20,8 @@ interface StatusBarProps {
 
 const Container = styled.div`
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  height: 60px;
+  justify-content: space-between;
+  gap: 16px;
   align-items: center;
 `
 
@@ -30,31 +29,29 @@ const StatusItem = styled.div<{ $isQuest?: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: ${theme.colors.backgroundAlt};
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 0 12px;
   min-width: 60px;
-  border: 1px solid ${theme.colors.border};
-  height: 50px;
+  min-height: 48px;
   justify-content: center;
 
   ${props => props.$isQuest && css`
     flex: 1;
-    max-width: 200px;
+    align-items: flex-end;
     min-width: 100px;
   `}
 `
 
 const StatusLabel = styled.span`
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: ${theme.colors.textMuted};
   text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 2px;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
 `
 
 const StatusValue = styled.span`
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
   font-weight: bold;
   color: ${theme.colors.text};
 `
@@ -91,10 +88,9 @@ const CharCurrent = styled(CharBase)`
 `
 
 const CharPending = styled(CharBase)`
-  opacity: 0.4;
   background: #f5f5f5;
   border-color: #ddd;
-  color: #999;
+  color: ${theme.colors.textMuted};
 `
 
 const ReturnHint = styled.span`

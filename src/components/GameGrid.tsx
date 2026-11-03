@@ -12,7 +12,7 @@ interface GameGridProps {
 
 const GridWrapper = styled.div`
   position: relative;
-  margin: 10px 0;
+  margin: 0 0 20px;
 `
 
 const GridContainer = styled.div<{ $size: number }>`
@@ -20,10 +20,9 @@ const GridContainer = styled.div<{ $size: number }>`
   grid-template-columns: repeat(${props => props.$size}, 1fr);
   gap: ${theme.sizes.gridGap};
   background: ${theme.colors.shelterDark};
-  padding: ${theme.sizes.gridGap};
+  padding: 8px;
   border-radius: ${theme.sizes.borderRadius};
-  box-shadow: ${theme.shadows.medium};
-  width: min(90vw, 500px);
+  width: min(calc(100vw - 24px), 540px);
   aspect-ratio: 1;
 `
 

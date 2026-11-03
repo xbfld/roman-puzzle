@@ -14,7 +14,8 @@ export const GlobalStyles = createGlobalStyle`
 
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #faf8f5 0%, #f5f0e8 100%);
+    background: ${theme.colors.background};
+    line-height: 1.5;
     color: ${theme.colors.text};
     min-height: 100vh;
     touch-action: manipulation;
@@ -28,7 +29,11 @@ export const GlobalStyles = createGlobalStyle`
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 10px;
+    padding: 40px 20px 32px;
+
+    @media (max-width: ${theme.breakpoints.tablet}) {
+      padding: 20px 12px 28px;
+    }
   }
 
   button {
@@ -40,6 +45,23 @@ export const GlobalStyles = createGlobalStyle`
     &:focus-visible {
       outline: 2px solid ${theme.colors.primary};
       outline-offset: 2px;
+    }
+  }
+
+  :where(a, input):focus-visible {
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: 4px;
+  }
+
+  ::selection {
+    background: ${theme.colors.shelterDark};
+    color: ${theme.colors.text};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition: none !important;
     }
   }
 

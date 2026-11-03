@@ -15,16 +15,16 @@ import { theme } from './styles/theme'
 import { SaveSlotType } from './lib/types'
 import { getStateAtIndex, move as gameMove, createInitialState } from './lib/game'
 
-const Container = styled.div`
+const Container = styled.main`
   display: flex;
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 520px;
+  max-width: 540px;
 `
 
 const Credits = styled.div`
-  margin-top: 15px;
+  margin-top: 28px;
   font-size: 0.75rem;
   color: ${theme.colors.textMuted};
 `

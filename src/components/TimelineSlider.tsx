@@ -9,11 +9,8 @@ interface TimelineSliderProps {
 
 const Container = styled.div`
   width: 100%;
-  max-width: 500px;
-  padding: 8px 15px;
-  background: ${theme.colors.backgroundAlt};
-  border-radius: ${theme.sizes.borderRadius};
-  border: 1px solid ${theme.colors.border};
+  max-width: 540px;
+  padding: 8px 0;
   margin-bottom: 10px;
 `
 
@@ -58,7 +55,7 @@ const Slider = styled.input`
   appearance: none;
   background: linear-gradient(90deg, ${theme.colors.success} 0%, ${theme.colors.shelter} 0%);
   border-radius: 3px;
-  outline: none;
+
   cursor: pointer;
 
   &::-webkit-slider-thumb {
@@ -66,7 +63,7 @@ const Slider = styled.input`
     appearance: none;
     width: 18px;
     height: 18px;
-    background: linear-gradient(145deg, #a0522d 0%, ${theme.colors.primary} 100%);
+    background: ${theme.colors.primary};
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #fff;
@@ -81,7 +78,7 @@ const Slider = styled.input`
   &::-moz-range-thumb {
     width: 18px;
     height: 18px;
-    background: linear-gradient(145deg, #a0522d 0%, ${theme.colors.primary} 100%);
+    background: ${theme.colors.primary};
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #fff;
@@ -98,7 +95,7 @@ const Info = styled.div`
 const Position = styled.span`
   font-size: 0.75rem;
   color: ${theme.colors.textMuted};
-  font-family: monospace;
+  font-variant-numeric: tabular-nums;
 `
 
 export function TimelineSlider({ timeline, onSeek }: TimelineSliderProps) {
@@ -132,6 +129,7 @@ export function TimelineSlider({ timeline, onSeek }: TimelineSliderProps) {
           })}
         </Markers>
         <Slider
+          aria-label="이동 기록"
           type="range"
           min={0}
           max={maxMoves}
