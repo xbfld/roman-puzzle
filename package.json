@@ -4,6 +4,7 @@
   "description": "A web-based puzzle game with Roman numerals",
   "type": "module",
   "scripts": {
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview"

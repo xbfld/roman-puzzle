@@ -90,6 +90,30 @@ const RomanExample = styled.span`
   border-radius: 4px;
 `
 
+const UpdateInfo = styled.section`
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${theme.colors.border};
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: ${theme.colors.textLight};
+
+  h3 {
+    color: ${theme.colors.text};
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  p + p { margin-top: 6px; }
+  time { font-variant-numeric: tabular-nums; }
+`
+
+const builtAt = new Intl.DateTimeFormat('ko-KR', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Seoul',
+}).format(new Date(__BUILD_INFO__.builtAt))
+
 export function HelpModal({ isOpen, onClose }: HelpModalProps) {
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -101,8 +125,21 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
     <Overlay $isOpen={isOpen} onClick={handleOverlayClick}>
       <Content>
         <CloseButton onClick={onClose}>&times;</CloseButton>
-        <Title>게임 방법</Title>
+        <Title>3999 안내</Title>
+        <UpdateInfo aria-labelledby="update-info-title">
+          <h3 id="update-info-title">업데이트 정보</h3>
+          <p>버전 {__BUILD_INFO__.version} · 빌드 {__BUILD_INFO__.commit}</p>
+          <p>생성 시각: <time dateTime={__BUILD_INFO__.builtAt}>{builtAt}</time> (한국 시간)</p>
+          <p>추천 경로 탐색에서 이동·회전·반전으로 같은 보드의 중복을 제거합니다. 찾은 경로는 원래 좌표와 방향 그대로 재생됩니다.</p>
+          <p>빌드 번호와 생성 시각으로 지금 보고 있는 배포본을 구분할 수 있습니다.</p>
+        </UpdateInfo>
+        <Title as="h3">게임 방법</Title>
         <Body>
+          <p><strong>10레벨 도움:</strong> 현재 턴에서 시작해 약 12초 안에서 경로를 찾습니다. 목표에 못 미치면 찾은 범위만 표시하며, 도달 불가능이나 최적 경로를 보장하지 않습니다. 추천 전략을 열면 다음 방향과 ‘추천 한 수 따라가기’로 진행할 수 있습니다.</p>
+          <hr />
+          <p><strong>전략 탐색:</strong> 레벨과 턴을 되짚어 다른 수를 두세요. 새 전략을 열어도 기존 기록과 각 전략에서 보던 위치는 남습니다.</p>
+          <p><strong>전략 비교:</strong> 같은 레벨 시작점이나 처음 다른 수에서 보드를 비교하세요. 모바일은 A/B 전환, 넓은 화면은 나란히 보기를 지원합니다. 비교 중 탐색은 플레이 기록을 바꾸지 않습니다.</p>
+          <hr />
           <p><strong>목표:</strong> 로마숫자 퀘스트를 완료하며 최대한 높은 레벨 달성</p>
           <hr />
           <p><strong>퀘스트:</strong> 로마숫자를 순서대로 밟고 쉼터(빈칸)로 돌아가기</p>

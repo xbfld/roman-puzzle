@@ -1,7 +1,6 @@
 import { memo } from 'react'
 import styled, { css } from 'styled-components'
 import { theme } from '../styles/theme'
-import { playerPulse, glow } from '../styles/animations'
 import { PlacedTile } from '../lib/types'
 
 interface GridCellProps {
@@ -33,41 +32,32 @@ const CellContainer = styled.div<{
   font-weight: bold;
   position: relative;
   cursor: ${props => props.$isValidMove ? 'pointer' : 'default'};
-  transition: all 0.15s ease;
+  transition: background 150ms ease, transform 150ms ease;
 
   ${props => props.$isShelter && css`
-    background: ${props.$isDark
-      ? 'linear-gradient(135deg, #d8cfc2 0%, #c8bfb2 100%)'
-      : `linear-gradient(135deg, ${theme.colors.shelter} 0%, #f0e8dd 100%)`};
-    border: 1px solid ${theme.colors.shelterDark};
+    background: ${props.$isDark ? '#e7dfd3' : '#eee7dc'};
+    border: 1px solid transparent;
   `}
 
   ${props => props.$isRoman && css`
-    background: ${props.$isOldTile
-      ? (props.$isDark
-        ? 'linear-gradient(135deg, #ddd5ca 0%, #cdc5ba 100%)'
-        : 'linear-gradient(135deg, #e8e0d5 0%, #d8d0c5 100%)')
-      : (props.$isDark
-        ? 'linear-gradient(135deg, #f5ecdc 0%, #f0d8a0 100%)'
-        : `linear-gradient(135deg, ${theme.colors.roman} 0%, #ffe0b2 100%)`)};
-    border: 2px solid ${props.$isOldTile ? '#c0b8a8' : theme.colors.romanBorder};
+    background: ${props.$isOldTile ? '#e4ddd1' : theme.colors.roman};
+    border: 1px solid ${props.$isOldTile ? theme.colors.shelterDark : theme.colors.romanBorder};
   `}
 
   ${props => props.$isPlayer && css`
-    background: linear-gradient(145deg, #a0522d 0%, ${theme.colors.primary} 100%);
+    background: ${theme.colors.primary};
     border: 2px solid #6b3410;
-    box-shadow: 0 0 15px ${theme.colors.playerGlow};
-    animation: ${playerPulse} 1.5s ease-in-out infinite;
     z-index: 10;
   `}
 
   ${props => props.$isValidMove && !props.$isPlayer && css`
-    animation: ${glow} 1s ease-in-out infinite;
+    outline: 2px solid ${theme.colors.primary};
+    outline-offset: -2px;
     cursor: pointer;
 
     &:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(139, 69, 19, 0.6);
+      background: ${theme.colors.roman};
     }
   `}
 `
@@ -83,17 +73,15 @@ const romanColors: Record<string, string> = {
 }
 
 const CellContent = styled.span<{ $isPlayer: boolean; $isOldTile: boolean; $char?: string }>`
+  font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.3rem;
   color: ${props => {
-    if (props.$char && romanColors[props.$char]) return romanColors[props.$char]
     if (props.$isPlayer) return '#fff'
-    if (props.$isOldTile) return '#999'
+    if (props.$isOldTile) return theme.colors.textMuted
+    if (props.$char && romanColors[props.$char]) return romanColors[props.$char]
     return theme.colors.primary
   }};
-  text-shadow: ${props => {
-    if (props.$isPlayer) return '0 0 4px rgba(255,255,255,0.8), 0 1px 2px rgba(0,0,0,0.5)'
-    return 'none'
-  }};
+
   font-weight: bold;
   z-index: 1;
 
@@ -122,7 +110,7 @@ const PlayerIndicator = styled.div`
   inset: 2px;
   border: 3px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 0 8px rgba(0,0,0,0.3), inset 0 0 8px rgba(139, 69, 19, 0.3);
+
   pointer-events: none;
 `
 

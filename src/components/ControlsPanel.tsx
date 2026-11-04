@@ -13,14 +13,15 @@ interface ControlsPanelProps {
 const Container = styled.div`
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
+  flex-direction: column;
   width: 100%;
-  max-width: 500px;
+  max-width: 540px;
   gap: 10px;
 `
 
 const ControlsInfo = styled.div`
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: ${theme.colors.textMuted};
   line-height: 1.4;
 
@@ -48,75 +49,32 @@ const MobileInfo = styled.div`
 `
 
 const ButtonGroup = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 6px;
+
+  @media (max-width: ${theme.breakpoints.tablet}) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 `
 
 const Button = styled.button<{ $variant?: 'help' | 'danger' | 'clipboard' }>`
-  padding: 8px 14px;
-  border-radius: ${theme.sizes.borderRadiusSmall};
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 6px;
   font-size: 0.85rem;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  box-shadow: ${theme.shadows.small};
+  font-weight: 600;
+  white-space: nowrap;
+  background: ${props => props.$variant ? 'transparent' : theme.colors.primary};
+  color: ${props => props.$variant === 'danger' ? theme.colors.danger : props.$variant ? theme.colors.primary : '#fff'};
+  border: 1px solid ${props => props.$variant ? theme.colors.border : theme.colors.primary};
+  transition: background 150ms ease;
 
-  ${props => {
-    if (props.$variant === 'help') {
-      return `
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        border-radius: 50%;
-        background: linear-gradient(145deg, #78909c 0%, #546e7a 100%);
-        color: #fff;
-        font-size: 1.1rem;
-        font-weight: bold;
+  &:hover {
+    background: ${props => props.$variant === 'danger' ? theme.colors.dangerLight : props.$variant ? theme.colors.backgroundAlt : theme.colors.primaryLight};
+  }
 
-        &:hover {
-          background: linear-gradient(145deg, #90a4ae 0%, #78909c 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(84, 110, 122, 0.4);
-        }
-      `
-    }
-    if (props.$variant === 'danger') {
-      return `
-        background: linear-gradient(145deg, #ef5350 0%, #e53935 100%);
-        color: #fff;
-
-        &:hover {
-          background: linear-gradient(145deg, #f44336 0%, #d32f2f 100%);
-          transform: translateY(-2px);
-        }
-      `
-    }
-    if (props.$variant === 'clipboard') {
-      return `
-        width: 36px;
-        height: 36px;
-        padding: 0;
-        border-radius: 50%;
-        background: linear-gradient(145deg, #66bb6a 0%, #43a047 100%);
-        color: #fff;
-        font-size: 1rem;
-
-        &:hover {
-          background: linear-gradient(145deg, #81c784 0%, #66bb6a 100%);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(67, 160, 71, 0.4);
-        }
-      `
-    }
-    return `
-      background: linear-gradient(145deg, #a0522d 0%, ${theme.colors.primary} 100%);
-      color: #fff;
-
-      &:hover {
-        background: linear-gradient(145deg, #b8733d 0%, #a0522d 100%);
-        transform: translateY(-2px);
-      }
-    `
-  }}
+  &:active { transform: translateY(1px); }
 `
 
 export function ControlsPanel({
@@ -138,12 +96,12 @@ export function ControlsPanel({
         <p><strong>터치로 이동</strong></p>
       </MobileInfo>
       <ButtonGroup>
-        <Button $variant="help" onClick={onHelpOpen}>?</Button>
-        <Button $variant="clipboard" onClick={onCopyToClipboard} title="클립보드로 복사">📋</Button>
-        <Button $variant="clipboard" onClick={onPasteFromClipboard} title="클립보드에서 불러오기">📥</Button>
+        <Button $variant="help" onClick={onHelpOpen} aria-label="게임 방법">?</Button>
+        <Button $variant="clipboard" onClick={onCopyToClipboard} title="클립보드로 복사">복사</Button>
+        <Button $variant="clipboard" onClick={onPasteFromClipboard} title="클립보드에서 불러오기">불러오기</Button>
         <Button onClick={onUndo}>Undo</Button>
         <Button onClick={onRedo}>Redo</Button>
-        <Button $variant="danger" onClick={onReset}>Reset</Button>
+        <Button $variant="help" onClick={onReset}>새 전략</Button>
       </ButtonGroup>
     </Container>
   )
