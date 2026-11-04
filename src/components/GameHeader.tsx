@@ -27,10 +27,22 @@ const Title = styled.h1`
   }
 `
 
+const DocumentLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 16px;
+  margin: -12px 0 12px;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+`
+
 export function GameHeader({ state }: GameHeaderProps) {
   return (
     <Container>
       <Title>3999</Title>
+      <DocumentLink href="./docs/">문서 · 탐색 방법</DocumentLink>
       <StatusBar state={state} />
     </Container>
   )
