@@ -42,7 +42,7 @@ export function GameHeader({ state }: GameHeaderProps) {
   return (
     <Container>
       <Title>3999</Title>
-      <DocumentLink href="./docs/">문서 · 탐색 방법</DocumentLink>
+      <DocumentLink href="./docs/index.html">문서 · 탐색 방법</DocumentLink>
       <StatusBar state={state} />
     </Container>
   )
