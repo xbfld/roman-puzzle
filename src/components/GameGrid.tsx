@@ -15,7 +15,7 @@ interface GameGridProps {
 
 const GridWrapper = styled.div`
   position: relative;
-  margin: 0 0 20px;
+  margin: 0 0 12px;
 `
 
 const GridContainer = styled.div<{ $size: number; $fluid: boolean }>`

@@ -10,20 +10,20 @@ interface GameHeaderProps {
 const Container = styled.div`
   width: 100%;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 `
 
 const Title = styled.h1`
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 4rem;
+  font-size: 2.5rem;
   font-weight: 400;
   line-height: 1.1;
   letter-spacing: -0.03em;
   color: ${theme.colors.primary};
-  margin: 0 0 24px;
+  margin: 0;
 
   @media (max-width: ${theme.breakpoints.mobile}) {
-    font-size: 3.5rem;
+    font-size: 2.25rem;
   }
 `
 
@@ -32,7 +32,7 @@ const DocumentLink = styled.a`
   align-items: center;
   min-height: 48px;
   padding: 8px 16px;
-  margin: -12px 0 12px;
+  margin: 0 0 8px;
   font-size: 0.9rem;
   text-decoration: underline;
   text-underline-offset: 4px;

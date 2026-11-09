@@ -2,6 +2,8 @@ import styled from 'styled-components'
 import { theme } from '../styles/theme'
 
 interface ControlsPanelProps {
+  canUndo: boolean
+  canRedo: boolean
   onUndo: () => void
   onRedo: () => void
   onReset: () => void
@@ -18,6 +20,9 @@ const Container = styled.div`
   width: 100%;
   max-width: 540px;
   gap: 10px;
+  margin-bottom: 24px;
+  summary { min-height: 44px; padding: 10px 0; color: ${theme.colors.textLight}; font-size: 0.85rem; cursor: pointer; }
+  summary:focus-visible { outline: 2px solid ${theme.colors.primary}; outline-offset: 2px; }
 `
 
 const ControlsInfo = styled.div`
@@ -50,7 +55,7 @@ const MobileInfo = styled.div`
 
 const ButtonGroup = styled.div`
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 6px;
 
   @media (max-width: ${theme.breakpoints.tablet}) {
@@ -75,9 +80,12 @@ const Button = styled.button<{ $variant?: 'help' | 'danger' | 'clipboard' }>`
   }
 
   &:active { transform: translateY(1px); }
+  &:disabled { background: ${theme.colors.backgroundAlt}; color: ${theme.colors.textDisabled}; border-color: ${theme.colors.border}; cursor: default; transform: none; }
 `
 
 export function ControlsPanel({
+  canUndo,
+  canRedo,
   onUndo,
   onRedo,
   onReset,
@@ -87,22 +95,27 @@ export function ControlsPanel({
 }: ControlsPanelProps) {
   return (
     <Container>
+      <ButtonGroup>
+        <Button onClick={onUndo} disabled={!canUndo} title="Z">되돌리기</Button>
+        <Button onClick={onRedo} disabled={!canRedo} title="Y">다시 실행</Button>
+        <Button $variant="help" onClick={onHelpOpen}>게임 방법</Button>
+      </ButtonGroup>
       <ControlsInfo>
         <p><strong>Move:</strong> Arrow / WASD</p>
         <p><strong>Undo/Redo:</strong> Z / Y (Shift: 레벨)</p>
         <p><strong>Slot:</strong> 1-3 (Shift: 저장)</p>
       </ControlsInfo>
       <MobileInfo>
-        <p><strong>터치로 이동</strong></p>
+        <p>보드의 위·아래·왼쪽·오른쪽 영역을 눌러도 이동해요.</p>
       </MobileInfo>
-      <ButtonGroup>
-        <Button $variant="help" onClick={onHelpOpen} aria-label="게임 방법">?</Button>
+      <details>
+        <summary>기록 복사 · 불러오기 · 새 전략</summary>
+        <ButtonGroup>
         <Button $variant="clipboard" onClick={onCopyToClipboard} title="클립보드로 복사">복사</Button>
         <Button $variant="clipboard" onClick={onPasteFromClipboard} title="클립보드에서 불러오기">불러오기</Button>
-        <Button onClick={onUndo}>Undo</Button>
-        <Button onClick={onRedo}>Redo</Button>
         <Button $variant="help" onClick={onReset}>새 전략</Button>
-      </ButtonGroup>
+        </ButtonGroup>
+      </details>
     </Container>
   )
 }

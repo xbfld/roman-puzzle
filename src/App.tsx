@@ -9,6 +9,7 @@ import { StrategyComparison } from './components/StrategyComparison'
 import { SolverPanel } from './components/SolverPanel'
 import { useStrategyStore } from './stores/strategyStore'
 import { ControlsPanel } from './components/ControlsPanel'
+import { MoveControls } from './components/MoveControls'
 import { HelpModal } from './components/HelpModal'
 import { FloatingMessage } from './components/FloatingMessage'
 import { useGameStore } from './stores/gameStore'
@@ -215,7 +216,7 @@ export default function App() {
 
   // Keyboard controls
   useKeyboard({
-    enabled: !comparing,
+    enabled: !comparing && !helpOpen,
     onMove: handleMove,
     onUndo: handleUndo,
     onRedo: handleRedo,
@@ -227,7 +228,7 @@ export default function App() {
 
   // Touch controls
   useTouch({
-    enabled: !comparing,
+    enabled: !comparing && !helpOpen,
     containerRef: gridRef as React.RefObject<HTMLElement>,
     onMove: handleMove,
   })
@@ -257,6 +258,19 @@ export default function App() {
           <div ref={gridRef}>
             <GameGrid state={state} onMove={handleMove} />
           </div>
+
+          <MoveControls state={state} onMove={handleMove} />
+
+          <ControlsPanel
+            canUndo={timeline.currentIndex > 0}
+            canRedo={timeline.currentIndex < timeline.moves.length}
+            onUndo={handleUndo}
+            onRedo={handleRedo}
+            onReset={handleReset}
+            onHelpOpen={() => setHelpOpen(true)}
+            onCopyToClipboard={handleCopyToClipboard}
+            onPasteFromClipboard={handlePasteFromClipboard}
+          />
 
           <TimelineSlider timeline={timeline} onSeek={handleSeek} />
 
@@ -296,14 +310,6 @@ export default function App() {
 
           </LegacySaves>
 
-          <ControlsPanel
-            onUndo={handleUndo}
-            onRedo={handleRedo}
-            onReset={handleReset}
-            onHelpOpen={() => setHelpOpen(true)}
-            onCopyToClipboard={handleCopyToClipboard}
-            onPasteFromClipboard={handlePasteFromClipboard}
-          />
 
         </>
       )}
